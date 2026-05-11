@@ -1,0 +1,19 @@
+{
+  "modelId": "qwen3-vl-2b-instruct-q4_K_M",
+  "runtimeModelId": "Qwen3VL-2B-Instruct-Q4_K_M.gguf",
+  "version": "1.0.0",
+  "quantization": "Q4_K_M",
+  "relativeModelPath": "models/Qwen3VL-2B-Instruct-Q4_K_M.gguf",
+  "relativeMmprojPath": "models/mmproj-Qwen3VL-2B-Instruct-Q8_0.gguf",
+  "relativeReadyMarker": "models/Qwen3VL-2B-Instruct-Q4_K_M.ready",
+  "sha256": "089D75C52F4B7FFC56BA998FFC50AAE89FCAFC755F9E7208AACCA281DCA6C2AE",
+  "sizeBytes": 1107409952,
+  "mmprojSha256": "F9A68FABBA69C3B81E153367B2C7521030B0FA8BB0DE400C9599C8E6725F9C82",
+  "mmprojSizeBytes": 445053216,
+  "contextSize": 8192,
+  "bundled": true,
+  "runtime": "embedded-llama",
+  "tier": "qwen3vl-q4",
+  "source": "https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/Qwen3VL-2B-Instruct-Q4_K_M.gguf",
+  "mmprojSource": "https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-2B-Instruct-Q8_0.gguf"
+}

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Layout Studio - Editorial Scrapbook</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Be+Vietnam+Pro:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#4adfa2",
+                        "on-primary-container": "#00452d",
+                        "inverse-on-surface": "#ebf3eb",
+                        "inverse-surface": "#2b322d",
+                        "outline-variant": "#bbcabf",
+                        "surface-container-low": "#eef6ee",
+                        "on-secondary-fixed-variant": "#474746",
+                        "surface-container-high": "#e2eae3",
+                        "primary-container": "#0fbd83",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#dde4dd",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "surface-dim": "#d4dcd5",
+                        "tertiary-fixed-dim": "#ffb3ad",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface": "#f4fbf4",
+                        "tertiary": "#a43b37",
+                        "surface-container-highest": "#dde4dd",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed": "#410004",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "primary": "#006c49",
+                        "on-tertiary-fixed-variant": "#842422",
+                        "tertiary-container": "#ff8078",
+                        "on-secondary-container": "#636262",
+                        "on-error-container": "#93000a",
+                        "background": "#f4fbf4",
+                        "on-primary-fixed-variant": "#005236",
+                        "on-primary-fixed": "#002113",
+                        "secondary-container": "#e2dfde",
+                        "on-surface": "#161d19",
+                        "on-background": "#161d19",
+                        "secondary": "#5f5e5e",
+                        "on-surface-variant": "#3c4a42",
+                        "tertiary-fixed": "#ffdad7",
+                        "surface-bright": "#f4fbf4",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#6cfcbc",
+                        "on-tertiary-container": "#741818",
+                        "surface-tint": "#006c49",
+                        "surface-container": "#e8f0e8",
+                        "outline": "#6c7a71",
+                        "inverse-primary": "#4adfa2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "edge-margin": "1.5rem",
+                        "stack-gap-sm": "0.25rem",
+                        "stack-gap-lg": "2rem",
+                        "container-max": "448px",
+                        "stack-gap-md": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Newsreader"],
+                        "label-caps": ["Be Vietnam Pro"],
+                        "body-main": ["Be Vietnam Pro"],
+                        "display-xl": ["Newsreader"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "1.2", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.15em", "fontWeight": "500" }],
+                        "body-main": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "display-xl": ["48px", { "lineHeight": "1.1", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        
+        /* Hard Shadows for brutalist effect */
+        .hard-shadow {
+            box-shadow: 4px 4px 0px 0px #1A1A1A;
+        }
+        .hard-shadow-sm {
+            box-shadow: 2px 2px 0px 0px #1A1A1A;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background antialiased min-h-screen flex flex-col items-center">
+<div class="noise-overlay"></div>
+<div class="w-full max-w-[448px] min-h-screen flex flex-col relative border-x border-outline-variant/30">
+<!-- TopAppBar -->
+<header class="bg-[#F0EFEA] dark:bg-stone-950 text-emerald-600 dark:text-emerald-400 font-['Newsreader'] serif tracking-tight text-lg docked full-width top-0 border-b border-stone-900 dark:border-stone-100 border-b-[1px] border-stone-900 flat no shadows flex justify-between items-center w-full px-6 py-4 max-w-[448px] mx-auto z-50 sticky top-0">
+<button class="text-stone-500 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 transition-colors duration-200 scale-95 active:duration-150 p-2 -ml-2 rounded-full">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-['Newsreader'] italic text-2xl font-light tracking-widest text-stone-900 dark:text-stone-100">ARCHIVE</h1>
+<button class="text-stone-500 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 transition-colors duration-200 scale-95 active:duration-150 p-2 -mr-2 rounded-full">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto pb-32 px-edge-margin py-stack-gap-lg flex flex-col gap-stack-gap-lg">
+<!-- Page Header -->
+<div class="flex flex-col gap-stack-gap-sm">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Studio</span>
+<h2 class="font-display-xl text-display-xl text-on-surface">Auto Layout</h2>
+<p class="font-body-main text-body-main text-on-surface-variant mt-2">AI-curated arrangement of your recent captures.</p>
+</div>
+<!-- Bento Grid -->
+<div class="grid grid-cols-2 gap-4 auto-rows-[160px]">
+<!-- Large Featured Card -->
+<div class="col-span-2 row-span-2 relative group border border-on-background hard-shadow bg-surface-container-lowest overflow-hidden transition-transform duration-200 hover:scale-[0.98]">
+<img class="w-full h-full object-cover grayscale-[20%] sepia-[10%] transition-transform duration-700 group-hover:scale-105" data-alt="analog film photo of a quiet european cafe street scene with warm afternoon sunlight and deep shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsSlM8gQkTSeRwiPT_XcX0OvXdNXnZ2quvaF-GxCKyeNdhHd1oA9zBJLQiaItOdmLGFZJJ2z-UvlNa49qzZ-6_Q0R1Xo3PFyK5PdKXfSvpJTuxL5dow_qa01wmiJDvrfA0pkGpI8TiH98o8_2DPUcsDGm0ZHzAab6jUlzywgmEj_TGL58Nf6UbsenfRW7wWW00DDnPYTHpYOBFxL9rTHLwCMc5LWHbXyBkpHzgRJYZkUrVTt_PFWCQm1iGjqXCJmdgETyY0vvLQ9Cv"/>
+<div class="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent">
+<p class="font-headline-md text-headline-md text-surface-container-lowest font-italic">Afternoon at Le Marais</p>
+</div>
+</div>
+<!-- Text Focus Card -->
+<div class="col-span-1 row-span-1 border border-on-background hard-shadow bg-surface-container-low p-4 flex flex-col justify-center transition-transform duration-200 hover:scale-[0.98]">
+<span class="material-symbols-outlined text-on-surface mb-2">format_quote</span>
+<p class="font-headline-md text-headline-md text-on-surface text-sm leading-tight">"The light was perfectly trapped between the awnings."</p>
+<span class="font-label-caps text-label-caps text-on-surface-variant mt-auto text-[10px]">— AI Generated Note</span>
+</div>
+<!-- Small Image Card -->
+<div class="col-span-1 row-span-1 border border-on-background hard-shadow bg-surface-container-lowest overflow-hidden transition-transform duration-200 hover:scale-[0.98]">
+<img class="w-full h-full object-cover transition-transform duration-700 hover:scale-105" data-alt="close up of a vintage espresso cup on a saucer with dark roasted coffee" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-WuIIaauRMJdkWTBWsFLbiWuYszy1EPGFL6sE_WNUS0o4eKp9bbwH_eDnrUXN8z_8uI74FrR97WOYL5W_TYMX_RtqxdzUpGEg4jyI3AtGsbGcm6dYqMDF4KYce4vD5BvjDzcwAgyd1Hc-w8HYdu06YKjX41HsAvqajZclfQQz98iyTmu7b8_3uMrddUKShdVHQyzxSKbTdqlUpVnxDRzFhaMfca8iXvOD1MCxCSIbOIFabs4-rG526YGfCYifSeCn9d6TZxTg244v"/>
+</div>
+<!-- Wide Image Card -->
+<div class="col-span-2 row-span-1 border border-on-background hard-shadow bg-surface-container-lowest overflow-hidden relative group transition-transform duration-200 hover:scale-[0.98]">
+<img class="w-full h-full object-cover object-center grayscale-[10%] transition-transform duration-700 group-hover:scale-105" data-alt="wide shot of cobblestone street leading to a classic archway in soft overcast light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4AdEszEG0ZUxRka219iI3IJs9kVKLUdOd_w_VGmyWQv8OG5m47UcvcdpfY7FBkPdKT9zCyKvIzThLLf5EnqX_spJs6Q1fKvxvvivhvdLsr50mxRKjpzr0-QOyN9NAmogLJzOCHQ9ihHwCyH9y8uejRjVR3kpBg18OO6M2M9GTsiVcc9imT4zA9SC8OFpXJcl3ZPjtEy6D9oWov6WYeOW7tt53GVMg0toYU66dlY5ncsWeOFSvRls_TWlLY-sG_d7-ozRAxamrG0vH"/>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/30 transition-opacity duration-200">
+<span class="material-symbols-outlined text-surface-container-lowest" style="font-variation-settings: 'FILL' 1;">zoom_in</span>
+</div>
+</div>
+<!-- Data Card -->
+<div class="col-span-1 row-span-1 border border-on-background hard-shadow bg-surface-container-high p-4 flex flex-col justify-between transition-transform duration-200 hover:scale-[0.98]">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Location Data</span>
+<div>
+<p class="font-headline-md text-headline-md text-on-surface text-lg">Paris, FR</p>
+<p class="font-body-main text-body-main text-on-surface-variant text-sm">Oct 24, 2023</p>
+</div>
+</div>
+<!-- Texture/Filler Card -->
+<div class="col-span-1 row-span-1 border border-on-background hard-shadow bg-surface-variant p-4 flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-br from-surface-variant to-outline-variant opacity-50"></div>
+<span class="material-symbols-outlined text-outline text-4xl z-10" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+</div>
+</main>
+<!-- Sticky Bottom Drawer -->
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[448px] bg-background border-t border-on-background hard-shadow p-6 z-40">
+<button class="w-full bg-on-background text-surface-container-lowest font-label-caps text-label-caps uppercase py-4 border border-on-background hard-shadow-sm flex items-center justify-center gap-2 transition-transform duration-200 hover:scale-[0.98] active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">publish</span>
+                Publish to Archive
+            </button>
+<div class="flex justify-center mt-4">
+<button class="text-on-surface-variant font-body-main text-body-main text-sm underline decoration-outline-variant underline-offset-4 hover:text-on-surface transition-colors duration-200">
+                    Regenerate Layout
+                </button>
+</div>
+</div>
+</div>
+</body></html>

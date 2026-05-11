@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Memoir Reader - Editorial Scrapbook</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Be+Vietnam+Pro:ital,wght@0,100..900;1,100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#4adfa2",
+                    "on-primary-container": "#00452d",
+                    "inverse-on-surface": "#ebf3eb",
+                    "inverse-surface": "#2b322d",
+                    "outline-variant": "#bbcabf",
+                    "surface-container-low": "#eef6ee",
+                    "on-secondary-fixed-variant": "#474746",
+                    "surface-container-high": "#e2eae3",
+                    "primary-container": "#0fbd83",
+                    "surface-container-lowest": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#dde4dd",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "surface-dim": "#d4dcd5",
+                    "tertiary-fixed-dim": "#ffb3ad",
+                    "on-secondary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "surface": "#f4fbf4",
+                    "tertiary": "#a43b37",
+                    "surface-container-highest": "#dde4dd",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-fixed": "#410004",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "primary": "#006c49",
+                    "on-tertiary-fixed-variant": "#842422",
+                    "tertiary-container": "#ff8078",
+                    "on-secondary-container": "#636262",
+                    "on-error-container": "#93000a",
+                    "background": "#f4fbf4",
+                    "on-primary-fixed-variant": "#005236",
+                    "on-primary-fixed": "#002113",
+                    "secondary-container": "#e2dfde",
+                    "on-surface": "#161d19",
+                    "on-background": "#161d19",
+                    "secondary": "#5f5e5e",
+                    "on-surface-variant": "#3c4a42",
+                    "tertiary-fixed": "#ffdad7",
+                    "surface-bright": "#f4fbf4",
+                    "error": "#ba1a1a",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed": "#6cfcbc",
+                    "on-tertiary-container": "#741818",
+                    "surface-tint": "#006c49",
+                    "surface-container": "#e8f0e8",
+                    "outline": "#6c7a71",
+                    "inverse-primary": "#4adfa2"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "edge-margin": "1.5rem",
+                    "stack-gap-sm": "0.25rem",
+                    "stack-gap-lg": "2rem",
+                    "container-max": "448px",
+                    "stack-gap-md": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline-md": [
+                            "Newsreader"
+                    ],
+                    "label-caps": [
+                            "Be Vietnam Pro"
+                    ],
+                    "body-main": [
+                            "Be Vietnam Pro"
+                    ],
+                    "display-xl": [
+                            "Newsreader"
+                    ]
+            },
+            "fontSize": {
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-caps": [
+                            "12px",
+                            {
+                                    "lineHeight": "1",
+                                    "letterSpacing": "0.15em",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-main": [
+                            "16px",
+                            {
+                                    "lineHeight": "1.5",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "display-xl": [
+                            "48px",
+                            {
+                                    "lineHeight": "1.1",
+                                    "fontWeight": "400"
+                            }
+                    ]
+            }
+        },
+        },
+      }
+    </script>
+<style>
+        body {
+            /* Simulating the noise overlay from Brand Anchors */
+            background-color: #f4fbf4; /* surface */
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+        }
+        
+        /* Hard shadows for the brutalist edge */
+        .hard-shadow {
+            box-shadow: 4px 4px 0px 0px #1A1A1A;
+        }
+        
+        .tape-effect {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 10;
+        }
+        
+        /* Hide scrollbar for a cleaner reading experience */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background bg-background min-h-screen flex justify-center selection:bg-primary-container selection:text-on-primary-container">
+<!-- Mobile Container (Max 448px) -->
+<main class="w-full max-w-container-max bg-surface relative min-h-screen border-x border-outline-variant/30 pb-20">
+<!-- Subtle back button overlay (Task implied no navigation bars, but a reader needs a way out) -->
+<div class="absolute top-edge-margin left-edge-margin z-50">
+<button class="w-10 h-10 rounded-full bg-surface-container-lowest/80 backdrop-blur-md border border-on-surface/10 flex items-center justify-center text-on-surface hover:bg-surface-variant transition-colors hard-shadow">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+</div>
+<!-- Hero Section -->
+<header class="pt-32 px-edge-margin pb-stack-gap-lg">
+<div class="mb-stack-gap-sm flex items-center gap-2">
+<span class="font-label-caps text-label-caps text-secondary uppercase tracking-widest">October 1994</span>
+<div class="h-px bg-secondary flex-grow opacity-30"></div>
+</div>
+<h1 class="font-display-xl text-display-xl text-on-surface italic mb-stack-gap-md break-words">
+                The Paris<br/>Chronicles
+            </h1>
+<p class="font-body-main text-body-main text-on-surface-variant max-w-[90%]">
+                A collection of fragmented memories from a brisk autumn along the Seine.
+            </p>
+</header>
+<!-- Scrapbook Grid Layout 1 -->
+<section class="px-edge-margin mb-16 relative">
+<div class="relative">
+<!-- Tape -->
+<div class="tape-effect w-16 h-4 -top-2 left-1/2 -translate-x-1/2 -rotate-3"></div>
+<img alt="Paris view" class="w-full aspect-[4/5] object-cover border border-on-surface hard-shadow bg-surface-variant" data-alt="vintage styled photograph of the eiffel tower seen through autumn trees in paris with soft muted colors and film grain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFSmU9_uCZyNPvobS6DUKwjpvh9SZ5vx1K5KoT-v-mFZdvrBmFlMJgt1dmMGNGp__j4qWi3TCtuMjW4pIxCS1b2_og9xSnvVc5zmc3yEeljTTWhMVa2vpoaqOg_qvo7NvQlEz8jQcojpLXSTY06K-_R0hsImjVmXxJFuq6WpvLMrZTnj_05TNuqRGAUPUApGhI2oEMzf4qpB3WD90uJ6JS-UlIq1wSNLCP6ehNj_ou9Wrqb_DOPPUd0dUiQslxvLEIwev-W_ajLIzj"/>
+<!-- Overlapping secondary image -->
+<div class="absolute -bottom-8 -right-4 w-32 aspect-square p-2 bg-surface-container-lowest border border-on-surface hard-shadow rotate-6">
+<img alt="Camera" class="w-full h-full object-cover" data-alt="close up of an old film camera resting on a wooden cafe table in natural daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEDph2k4T_Lho5_zfEspY8OB6qx77aaaqo0c8TgVztrVRKEnfonUNlphcIFodVDLA-oxsPhso9gzOYgX571CdDREuvqp-KQbQZSUmc5V6kHbUryzy5OUEzkVBXj8rLdARJHZAdJdNb9eKQN9rAyoT6cK5ROZVykk9JN-SX4B2MKrouHNW_A9witpgQNz_zNznRBVsGDv1YPIoxJuw2e4wfEQjwmv50HusTN9PoYe4qMpH3ocDlc8ggdPXoJ6rGBQlGdVe1X-XDN9NH"/>
+</div>
+</div>
+<!-- Handwritten style caption -->
+<div class="mt-12 ml-4">
+<p class="font-headline-md text-headline-md text-on-surface italic text-xl">
+                    "We walked until our feet ached, letting the city dictate our path."
+                </p>
+</div>
+</section>
+<!-- Text Block -->
+<section class="px-edge-margin mb-16">
+<div class="border-l-2 border-primary pl-4 py-1">
+<p class="font-body-main text-body-main text-on-surface leading-relaxed">
+                    The air was crisp that morning. We stopped at a small patisserie near the Marais, the smell of butter and burnt sugar clinging to our coats long after we left. I remember you trying to capture the exact shade of the morning light on your old 35mm.
+                </p>
+</div>
+</section>
+<!-- Scrapbook Grid Layout 2 (Asymmetric) -->
+<section class="px-edge-margin mb-16">
+<div class="grid grid-cols-2 gap-4 relative">
+<!-- Left Column -->
+<div class="flex flex-col gap-8 pt-8">
+<div class="relative">
+<div class="tape-effect w-12 h-3 -top-1 -left-2 rotate-45"></div>
+<img alt="Receipt" class="w-full aspect-square object-cover border border-on-surface hard-shadow -rotate-2" data-alt="crumpled cafe receipt from a parisian coffee shop sitting on a marble table with soft shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvBzaeQnlPg0wEGgOzo6A3E7Z0e1gMqFhqepJaJocC--jFVD4Wz1YyRh-PZU-3j9Lavl6qxjhdPmKkZwJnwoQVywGPoI9YIsPnvX5TOEG0UZD09BmdYcL-OJWAKFPEfy5OL5xsBulIxSA_GcMVRv1W774IKHsAYOF_lC7Hyxp_6yov8iwFDtUeAraKnsZjy3r7G9OuQqAFcIA0v-1fotLWWCcMdGl8IHmd1vcxbslV60g9tP-dVf2Ic3K_8jLToilCc_W03X7QBaho"/>
+</div>
+<div class="p-4 bg-surface-container border border-on-surface hard-shadow">
+<p class="font-label-caps text-label-caps text-on-surface uppercase text-[10px]">Location</p>
+<p class="font-body-main text-body-main font-medium text-on-surface mt-1">Café de Flore, St-Germain</p>
+</div>
+</div>
+<!-- Right Column -->
+<div class="relative">
+<img alt="Cafe scene" class="w-full aspect-[2/3] object-cover border border-on-surface hard-shadow rotate-1" data-alt="black and white candid street photography of people sitting at a parisian cafe terrace drinking coffee" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1IhypfEBhqxuW5snZ2Z2_q6Wn2ik4Fm8-Vzekiq4BG-ddOVhO7Gm6kxHVIrImsNblR88UFzYtMweLMFEeWc7jdaLLW6jrd2IY79WHSDmhYR0j-QtJw73bhcBUrpxPwsTeif4miuCNKaNZWGxoXCSjViSgCwCcuBYvUriHrOjUnZBcrJHIQO6ZkZpgHPlAblI1o5qIqU7w5mLljnzQBvnPKa0ZnpjfEjcO_cS54CjBkj0R9w1qUe46fQTgZ_rBCbRLuCcoPAPJb6hd"/>
+</div>
+</div>
+</section>
+<!-- Closing Text -->
+<section class="px-edge-margin mb-24 text-center">
+<p class="font-headline-md text-headline-md text-on-surface italic mb-4">
+                Some moments are meant to be kept in pockets.
+            </p>
+<div class="w-8 h-px bg-on-surface/20 mx-auto"></div>
+</section>
+<!-- Floating Action Button for Interaction (e.g., Edit/Share) -->
+<div class="fixed bottom-8 right-8 md:right-[calc(50%-224px+2rem)] z-50">
+<button class="w-14 h-14 rounded-full bg-on-surface text-surface flex items-center justify-center hard-shadow hover:bg-on-surface-variant transition-colors group">
+<span class="material-symbols-outlined group-hover:rotate-90 transition-transform duration-300" style="font-variation-settings: 'FILL' 0;">share</span>
+</button>
+</div>
+</main>
+</body></html>

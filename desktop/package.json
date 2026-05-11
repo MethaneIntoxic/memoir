@@ -1,0 +1,23 @@
+{
+  "name": "memoir-desktop",
+  "version": "0.1.0",
+  "description": "Memoir — local scrapbook-style memoir drafting with AI",
+  "author": "Memoir",
+  "private": true,
+  "main": "main.cjs",
+  "scripts": {
+    "clean:renderer": "node -e \"require('./build-utils.cjs').cleanRendererDist()\"",
+    "clean:dist": "node -e \"require('./build-utils.cjs').cleanDesktopDist()\"",
+    "build:renderer": "npm run clean:renderer && npm --prefix ../app run build && node -e \"require('./build-utils.cjs').validateRendererBuild()\"",
+    "prepare:model": "node ../scripts/prepare-desktop-model.mjs",
+    "dev": "npm run build:renderer && electron .",
+    "start": "electron .",
+    "package": "npm run prepare:model && npm run clean:dist && npm run build:renderer && electron-builder --config electron-builder.config.cjs --dir",
+    "dist": "npm run prepare:model && npm run clean:dist && npm run build:renderer && electron-builder --config electron-builder.config.cjs --win dir zip",
+    "dist:single-file": "npm run prepare:model && npm run clean:dist && npm run build:renderer && electron-builder --config electron-builder.config.cjs --win portable"
+  },
+  "devDependencies": {
+    "electron": "^37.2.0",
+    "electron-builder": "^26.0.12"
+  }
+}

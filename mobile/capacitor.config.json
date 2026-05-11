@@ -1,0 +1,14 @@
+{
+  "appId": "local.memoir.mobile",
+  "appName": "Memoir",
+  "webDir": "../app/dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "ios": {
+    "contentInset": "automatic"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

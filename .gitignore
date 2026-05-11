@@ -1,0 +1,19 @@
+node_modules/
+app/node_modules/
+desktop/node_modules/
+mobile/node_modules/
+app/dist/
+dist/
+desktop/dist/
+desktop/dist-agent/
+.codex-logs/
+.playwright-cli/
+.worktrees/
+archive/
+output/
+*.log
+.env
+
+# Large binary assets - never commit
+desktop/resources/llama/
+desktop/resources/models/

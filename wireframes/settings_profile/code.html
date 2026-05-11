@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Editorial Scrapbook - Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#e2eae3",
+                    "primary-container": "#0fbd83",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#ebf3eb",
+                    "tertiary": "#a43b37",
+                    "tertiary-container": "#ff8078",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed-dim": "#ffb3ad",
+                    "secondary": "#5f5e5e",
+                    "inverse-primary": "#4adfa2",
+                    "on-error-container": "#93000a",
+                    "surface-variant": "#dde4dd",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "on-surface-variant": "#3c4a42",
+                    "on-primary-fixed-variant": "#005236",
+                    "primary": "#006c49",
+                    "on-secondary-fixed-variant": "#474746",
+                    "on-primary": "#ffffff",
+                    "on-surface": "#161d19",
+                    "on-secondary-container": "#636262",
+                    "on-primary-fixed": "#002113",
+                    "primary-fixed-dim": "#4adfa2",
+                    "outline-variant": "#bbcabf",
+                    "on-tertiary-fixed-variant": "#842422",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed": "#ffdad7",
+                    "on-tertiary": "#ffffff",
+                    "surface-bright": "#f4fbf4",
+                    "surface-container-low": "#eef6ee",
+                    "outline": "#6c7a71",
+                    "inverse-surface": "#2b322d",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "surface": "#f4fbf4",
+                    "surface-tint": "#006c49",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-container": "#741818",
+                    "background": "#f4fbf4",
+                    "secondary-fixed": "#e5e2e1",
+                    "surface-dim": "#d4dcd5",
+                    "on-tertiary-fixed": "#410004",
+                    "on-primary-container": "#00452d",
+                    "secondary-container": "#e2dfde",
+                    "error-container": "#ffdad6",
+                    "primary-fixed": "#6cfcbc",
+                    "surface-container": "#e8f0e8",
+                    "on-background": "#161d19",
+                    "surface-container-highest": "#dde4dd"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "stack-gap-sm": "0.25rem",
+                    "stack-gap-lg": "2rem",
+                    "container-max": "448px",
+                    "edge-margin": "1.5rem",
+                    "stack-gap-md": "0.75rem"
+            },
+            "fontFamily": {
+                    "label-caps": [
+                            "Be Vietnam Pro"
+                    ],
+                    "display-xl": [
+                            "Newsreader"
+                    ],
+                    "body-main": [
+                            "Be Vietnam Pro"
+                    ],
+                    "headline-md": [
+                            "Newsreader"
+                    ]
+            },
+            "fontSize": {
+                    "label-caps": [
+                            "12px",
+                            {
+                                    "lineHeight": "1",
+                                    "letterSpacing": "0.15em",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "display-xl": [
+                            "48px",
+                            {
+                                    "lineHeight": "1.1",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-main": [
+                            "16px",
+                            {
+                                    "lineHeight": "1.5",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "fontWeight": "400"
+                            }
+                    ]
+            }
+        },
+        },
+      }
+    </script>
+<style>
+        /* Grain Overlay */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        
+        /* Hard Shadows */
+        .hard-shadow {
+            box-shadow: 4px 4px 0px 0px #1A1A1A;
+        }
+        
+        .hard-shadow-sm {
+            box-shadow: 2px 2px 0px 0px #1A1A1A;
+        }
+        
+        /* Interactive scaling */
+        .active-scale:active {
+            transform: scale(0.98);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background antialiased min-h-screen relative flex justify-center">
+<!-- Noise Texture Overlay -->
+<div class="noise-overlay"></div>
+<!-- Main Container -->
+<main class="w-full max-w-container-max bg-[#F9F8F6] min-h-screen relative shadow-2xl overflow-hidden pb-24">
+<!-- TopAppBar (From JSON) -->
+<header class="docked full-width top-0 border-b border-b border-stone-900 bg-[#F9F8F6] text-stone-900 flex justify-between items-center w-full px-6 py-4 max-w-[448px] mx-auto z-10 sticky">
+<button class="hover:opacity-70 transition-opacity duration-300 active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-serif italic text-2xl tracking-tighter text-stone-900 font-serif italic tracking-tight text-2xl font-bold">MEMOIR</h1>
+<div class="w-8 h-8 rounded-full border border-stone-900 overflow-hidden hover:opacity-70 transition-opacity duration-300">
+<img alt="Profile" class="w-full h-full object-cover grayscale" data-alt="vintage portrait of a young woman with soft natural lighting and film grain aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4ekUaJaZ0LwUwLBXwcgewenBh5luTNPFQnwpB5nPSqy-nDCs-kmH3T-Gk08TXRkY7-Demc7D7sho02r7Ah2jkQleU_mXjcdCBdKlDP3uCRFzsgh12dcwcJfxvTWtajzjGxRMP2UXoe08buRa0pj4WP_IL6iX0ButdsCerdE805K6u-CUWpg64g_4SIjwMw7U0g2_n08-8nVTdFbXkSqcgnylX0lOZwv-6P18XQ1PmtLbTZZ-ZZJMtCDlOtyfzsMhdFhFbRTHn893Y"/>
+</div>
+</header>
+<!-- Profile Section -->
+<section class="px-edge-margin pt-12 pb-8 flex flex-col items-center border-b border-[#1A1A1A]">
+<div class="w-32 h-32 rounded-full border-2 border-[#1A1A1A] p-1 mb-6 bg-surface-container-high hard-shadow">
+<img alt="Eleanor Vance" class="w-full h-full object-cover rounded-full grayscale" data-alt="vintage portrait of a young woman with soft natural lighting and film grain aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKyWNc9JBkJv-b6ppOCpwMTrEjsOaSPZfpWnKa5cvIAIPv41apx9P-xOZ32oMEzvLx_uDnYcgSDrbpaEhhIGHeW0dtXB-G6yS0C73iDVlENw1BIevdwSDOPDp-ioNeyDSlko2h88qMHlLdysfzqOLoEM9LjWmxjE1UKH6KRKwf7t6bYr6WDi2IumKNh4KLznYEAAGrFOtRrXt2VKgg-_Y0rfe1gPR3H0Hj8D5K1IkFqflyJptvojEArRLwQVhjWcL5NZXQ4zAsq8zW"/>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-2">Eleanor Vance</h2>
+<p class="font-body-main text-body-main text-on-surface-variant italic mb-6">"Curating the everyday."</p>
+<button class="px-6 py-2 border border-[#1A1A1A] bg-background text-on-surface font-label-caps text-label-caps hard-shadow active-scale transition-transform">
+                EDIT PROFILE
+            </button>
+</section>
+<!-- Settings List -->
+<section class="px-edge-margin py-8 flex flex-col gap-stack-gap-lg">
+<!-- Category: Account -->
+<div class="flex flex-col gap-stack-gap-sm">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-2">ACCOUNT</h3>
+<button class="w-full flex items-center justify-between p-4 border border-[#1A1A1A] bg-surface hard-shadow-sm active-scale transition-transform group hover:bg-surface-container-high">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface">person_outline</span>
+<span class="font-body-main text-body-main text-on-surface">Personal Information</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface transition-colors">arrow_forward</span>
+</button>
+<button class="w-full flex items-center justify-between p-4 border border-[#1A1A1A] bg-surface hard-shadow-sm active-scale transition-transform group hover:bg-surface-container-high">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface">notifications_none</span>
+<span class="font-body-main text-body-main text-on-surface">Notifications</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface transition-colors">arrow_forward</span>
+</button>
+</div>
+<!-- Category: Aesthetics -->
+<div class="flex flex-col gap-stack-gap-sm">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-2">AESTHETICS</h3>
+<button class="w-full flex items-center justify-between p-4 border border-[#1A1A1A] bg-surface hard-shadow-sm active-scale transition-transform group hover:bg-surface-container-high">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface">palette</span>
+<span class="font-body-main text-body-main text-on-surface">Theme &amp; Layout</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">NOIR JOURNAL</span>
+</button>
+<button class="w-full flex items-center justify-between p-4 border border-[#1A1A1A] bg-surface hard-shadow-sm active-scale transition-transform group hover:bg-surface-container-high">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface">grain</span>
+<span class="font-body-main text-body-main text-on-surface">Film Grain Intensity</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">SUBTLE</span>
+</button>
+</div>
+<!-- Category: Archive -->
+<div class="flex flex-col gap-stack-gap-sm">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-2">ARCHIVE</h3>
+<button class="w-full flex items-center justify-between p-4 border border-[#1A1A1A] bg-surface hard-shadow-sm active-scale transition-transform group hover:bg-surface-container-high">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface">auto_stories</span>
+<span class="font-body-main text-body-main text-on-surface">Export Scrapbooks</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface transition-colors">arrow_forward</span>
+</button>
+</div>
+<!-- Sign Out -->
+<div class="pt-8">
+<button class="w-full p-4 border border-[#1A1A1A] bg-error-container text-on-error-container font-label-caps text-label-caps hard-shadow active-scale transition-transform hover:bg-tertiary-fixed-dim">
+                    SIGN OUT
+                </button>
+</div>
+</section>
+<!-- BottomNavBar (From JSON - Active State: person) -->
+<nav class="docked full-width bottom-0 border-t border-t border-stone-900 bg-[#F9F8F6] text-emerald-600 font-sans uppercase tracking-widest text-[10px] font-bold shadow-[0_-4px_0_0_rgba(26,26,26,0.05)] fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 bg-[#F9F8F6]/90 backdrop-blur-sm max-w-container-max mx-auto md:hidden">
+<button class="flex flex-col items-center justify-center text-stone-400 pt-2 hover:text-stone-900 transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+</button>
+<button class="flex flex-col items-center justify-center text-stone-400 pt-2 hover:text-stone-900 transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+</button>
+<button class="flex flex-col items-center justify-center text-stone-400 pt-2 hover:text-stone-900 transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="import_contacts">import_contacts</span>
+</button>
+<button class="flex flex-col items-center justify-center text-stone-900 border-t-2 border-stone-900 pt-2 hover:text-stone-900 active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="person" data-weight="fill" style="font-variation-settings: 'FILL' 1;">person</span>
+</button>
+</nav>
+</main>
+</body></html>

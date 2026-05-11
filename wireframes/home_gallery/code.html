@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Home Gallery - Memoirs</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,300&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#4adfa2",
+                        "on-primary-container": "#00452d",
+                        "inverse-on-surface": "#ebf3eb",
+                        "inverse-surface": "#2b322d",
+                        "outline-variant": "#bbcabf",
+                        "surface-container-low": "#eef6ee",
+                        "on-secondary-fixed-variant": "#474746",
+                        "surface-container-high": "#e2eae3",
+                        "primary-container": "#0fbd83",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#dde4dd",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "surface-dim": "#d4dcd5",
+                        "tertiary-fixed-dim": "#ffb3ad",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface": "#f4fbf4",
+                        "tertiary": "#a43b37",
+                        "surface-container-highest": "#dde4dd",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed": "#410004",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "primary": "#006c49",
+                        "on-tertiary-fixed-variant": "#842422",
+                        "tertiary-container": "#ff8078",
+                        "on-secondary-container": "#636262",
+                        "on-error-container": "#93000a",
+                        "background": "#f4fbf4",
+                        "on-primary-fixed-variant": "#005236",
+                        "on-primary-fixed": "#002113",
+                        "secondary-container": "#e2dfde",
+                        "on-surface": "#161d19",
+                        "on-background": "#161d19",
+                        "secondary": "#5f5e5e",
+                        "on-surface-variant": "#3c4a42",
+                        "tertiary-fixed": "#ffdad7",
+                        "surface-bright": "#f4fbf4",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#6cfcbc",
+                        "on-tertiary-container": "#741818",
+                        "surface-tint": "#006c49",
+                        "surface-container": "#e8f0e8",
+                        "outline": "#6c7a71",
+                        "inverse-primary": "#4adfa2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "edge-margin": "1.5rem",
+                        "stack-gap-sm": "0.25rem",
+                        "stack-gap-lg": "2rem",
+                        "container-max": "448px",
+                        "stack-gap-md": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Newsreader"],
+                        "label-caps": ["Be Vietnam Pro"],
+                        "body-main": ["Be Vietnam Pro"],
+                        "display-xl": ["Newsreader"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "1.2", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.15em", "fontWeight": "500" }],
+                        "body-main": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "display-xl": ["48px", { "lineHeight": "1.1", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        .hard-shadow {
+            box-shadow: 4px 4px 0px 0px #1A1A1A;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen font-body-main text-body-main relative pb-24">
+<div class="noise-overlay"></div>
+<!-- TopAppBar JSON Component -->
+<header class="bg-[#F0EFEA] dark:bg-stone-950 text-emerald-600 dark:text-emerald-400 font-['Newsreader'] serif tracking-tight text-lg docked full-width top-0 border-b border-stone-900 dark:border-stone-100 border-b-[1px] border-stone-900 flat no shadows flex justify-between items-center w-full px-6 py-4 max-w-[448px] mx-auto sticky z-40 transition-colors duration-200">
+<button class="hover:bg-stone-200 dark:hover:bg-stone-800 transition-colors duration-200 p-2 rounded-full scale-95 active:duration-150">
+<span class="material-symbols-outlined text-stone-900 dark:text-stone-100">menu</span>
+</button>
+<span class="font-['Newsreader'] italic text-2xl font-light tracking-widest text-stone-900 dark:text-stone-100">ARCHIVE</span>
+<button class="hover:bg-stone-200 dark:hover:bg-stone-800 transition-colors duration-200 p-2 rounded-full scale-95 active:duration-150">
+<span class="material-symbols-outlined text-stone-900 dark:text-stone-100">settings</span>
+</button>
+</header>
+<main class="max-w-container-max mx-auto px-edge-margin pt-stack-gap-lg flex flex-col gap-stack-gap-lg">
+<!-- Header Section -->
+<section class="flex flex-col gap-stack-gap-sm pt-4">
+<h1 class="font-display-xl text-display-xl text-on-surface">Memoirs</h1>
+<p class="font-body-main text-body-main text-on-surface-variant max-w-[80%]">Curated moments and visual stories from the archive.</p>
+</section>
+<!-- Gallery Feed -->
+<section class="flex flex-col gap-stack-gap-lg">
+<!-- Card 1 -->
+<article class="flex flex-col gap-stack-gap-md group cursor-pointer">
+<div class="w-full aspect-[4/5] border border-on-surface overflow-hidden relative">
+<img alt="Vintage camera on a wooden table" class="w-full h-full object-cover grayscale-[20%] group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="Vintage film camera resting on a rustic wooden table, soft natural window lighting, cinematic nostalgic mood, muted tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwjWXas3xdmTHouYFwP6-5sckQo1SfZZ6j6Z8sCq8L8ZUAyhtOVK69DpYWuA8ldytP5Lv6C6mG_cy00fILrTZ7Mi23kJwocZng4b5zl4dGb_DabGh9iCGbY6w-UYxqGyvVPqGcaRGkW9PC3CGnDqJdmF8QgJSKD_YX4fTQaDKbbFEg8hsS_cTCJBlcXuTGEAB8EJYh5og4XSkRTySmgN0U7S30lQIe0vZVbiWOigkHUkdbhW-4ExlPMz_j-bhk_u_-GkfCeyPhd3EQ"/>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">OCTOBER 1994</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Autumn in Kyoto</h2>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="flex flex-col gap-stack-gap-md group cursor-pointer">
+<div class="w-full aspect-square border border-on-surface overflow-hidden relative">
+<img alt="Abstract architectural shadows" class="w-full h-full object-cover grayscale-[40%] group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="Abstract stark shadows cast by modern brutalist architecture on a concrete wall, high contrast black and white, minimalist composition" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA293H81lr1UfOZLcuVbHZcK5OS8uVpw-JZkn7BXQCkShyK-pKFwNTHBphjJ_NHZaaX9p4VGeTTixpRHZH06VxfED2oQrDhp7remC-EpjBUdrS4qdgXPlD5XnlCAnjIDC7EEuwftgigQNRJ2Uhuu7grAHGbATr2bFRBXRgz7Du0m5xlOFivRl3k7I16_mufLygy9KK3IrvL5AfLLBEHEoNbxvplQURIvn-T7zsZvNuHaKx3vYQYfBgiCMzkbyqe4ycr6A_fTP52miYr"/>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">SUMMER 2001</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Concrete &amp; Light</h2>
+</div>
+</article>
+<!-- Card 3 -->
+<article class="flex flex-col gap-stack-gap-md group cursor-pointer">
+<div class="w-full aspect-[3/4] border border-on-surface overflow-hidden relative">
+<img alt="Coffee cup and open book" class="w-full h-full object-cover grayscale-[10%] group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="Overhead shot of a half-empty espresso cup next to an open vintage book with yellowed pages, soft morning light, editorial styling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQK1sBGsQcwFLNHXJ_Izt_MhuTe70ybe-6_NEEuA0_IP-QLFyFFBEZIMSfP7TIUgr8wagoonw6Yvm1onqLqanOXuU_7JTO2kXNBXRz7LCnLsjRfyeOzUIHMSQe0JQAlTNqTaFPu_EhYQXBL7aKkv96H-_7rQSNISKpjmYv3gOhumPpFlMA5--OjDC5hLqE25OwVLkMqRRuY20nAuBZHA0HElwXnsgPLoShdtdeae4SiHlCyBzJ4Sd4d8AsdtXHaWaORfCHSs4OS4ha"/>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">WINTER 2018</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Morning Rituals</h2>
+</div>
+</article>
+</section>
+<!-- Floating Action Button -->
+<button class="fixed bottom-32 right-edge-margin w-14 h-14 bg-on-surface text-surface rounded-full flex items-center justify-center hard-shadow hover:bg-on-surface-variant transition-colors group z-40 md:hidden">
+<span class="material-symbols-outlined group-hover:rotate-90 transition-transform duration-300">edit</span>
+</button>
+</main>
+<!-- BottomNavBar JSON Component -->
+<nav class="md:hidden fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[448px] z-50 flex justify-around items-center px-8 pb-8 pt-2 bg-[#F0EFEA]/90 dark:bg-stone-950/90 backdrop-blur-sm border-t border-stone-900 dark:border-stone-100 border-t-[1px] border-stone-900 shadow-[0_-4px_0_0_rgba(26,26,26,0.05)]">
+<button class="flex flex-col items-center justify-center text-stone-900 dark:text-stone-100 border-t-2 border-stone-900 dark:border-stone-100 pt-2 hover:text-stone-900 dark:hover:text-stone-100 transition-all duration-300 scale-98 active:duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+</button>
+<button class="flex flex-col items-center justify-center text-stone-400 dark:text-stone-600 pt-2 hover:text-stone-900 dark:hover:text-stone-100 transition-all duration-300 scale-98 active:duration-200">
+<span class="material-symbols-outlined">add_a_photo</span>
+</button>
+<button class="flex flex-col items-center justify-center text-stone-400 dark:text-stone-600 pt-2 hover:text-stone-900 dark:hover:text-stone-100 transition-all duration-300 scale-98 active:duration-200">
+<span class="material-symbols-outlined">auto_awesome</span>
+</button>
+<button class="flex flex-col items-center justify-center text-stone-400 dark:text-stone-600 pt-2 hover:text-stone-900 dark:hover:text-stone-100 transition-all duration-300 scale-98 active:duration-200">
+<span class="material-symbols-outlined">auto_stories</span>
+</button>
+</nav>
+</body></html>

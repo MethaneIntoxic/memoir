@@ -1,0 +1,26 @@
+{
+  "name": "memoir",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:app": "node scripts/dev-browser.mjs",
+    "dev:vite": "npm --prefix app run dev",
+    "dev:server": "node server/server.mjs",
+    "dev:desktop": "npm --prefix desktop run dev",
+    "build": "npm --prefix app run build",
+    "build:desktop": "npm --prefix desktop run package",
+    "dist:desktop": "npm --prefix desktop run dist",
+    "dist:desktop:single-file": "npm --prefix desktop run dist:single-file",
+    "prepare:desktop-model": "node scripts/prepare-desktop-model.mjs",
+    "package:web": "npm run build && node scripts/package-web.mjs",
+    "lint": "npm --prefix app run lint",
+    "release:readiness": "node scripts/release-readiness.mjs",
+    "test:client": "npm --prefix app run test",
+    "test": "node --test tests/server-fallback.test.mjs tests/runtime-json-parsing.test.mjs tests/runtime-context.test.mjs tests/memoir-core.test.mjs tests/dev-browser.test.mjs tests/packaged-smoke.test.mjs tests/desktop-server-port.test.mjs",
+    "phase0": "node --test tests/server-fallback.test.mjs tests/runtime-json-parsing.test.mjs tests/runtime-context.test.mjs tests/memoir-core.test.mjs tests/dev-browser.test.mjs tests/packaged-smoke.test.mjs tests/desktop-server-port.test.mjs",
+    "smoke:desktop-release": "node scripts/desktop-release-smoke.mjs",
+    "smoke:desktop-single-file": "node scripts/desktop-single-file-smoke.mjs",
+    "smoke:packaged": "node scripts/packaged-smoke.mjs",
+    "smoke": "npm test && npm run test:client && npm run build && npm run lint"
+  }
+}

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Photo Selection - Editorial Scrapbook</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=Newsreader:ital,wght@0,400;1,300&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#4adfa2",
+                      "on-primary-container": "#00452d",
+                      "inverse-on-surface": "#ebf3eb",
+                      "inverse-surface": "#2b322d",
+                      "outline-variant": "#bbcabf",
+                      "surface-container-low": "#eef6ee",
+                      "on-secondary-fixed-variant": "#474746",
+                      "surface-container-high": "#e2eae3",
+                      "primary-container": "#0fbd83",
+                      "surface-container-lowest": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "surface-variant": "#dde4dd",
+                      "on-secondary-fixed": "#1c1b1b",
+                      "surface-dim": "#d4dcd5",
+                      "tertiary-fixed-dim": "#ffb3ad",
+                      "on-secondary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "surface": "#f4fbf4",
+                      "tertiary": "#a43b37",
+                      "surface-container-highest": "#dde4dd",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-fixed": "#410004",
+                      "secondary-fixed-dim": "#c8c6c5",
+                      "primary": "#006c49",
+                      "on-tertiary-fixed-variant": "#842422",
+                      "tertiary-container": "#ff8078",
+                      "on-secondary-container": "#636262",
+                      "on-error-container": "#93000a",
+                      "background": "#f4fbf4",
+                      "on-primary-fixed-variant": "#005236",
+                      "on-primary-fixed": "#002113",
+                      "secondary-container": "#e2dfde",
+                      "on-surface": "#161d19",
+                      "on-background": "#161d19",
+                      "secondary": "#5f5e5e",
+                      "on-surface-variant": "#3c4a42",
+                      "tertiary-fixed": "#ffdad7",
+                      "surface-bright": "#f4fbf4",
+                      "error": "#ba1a1a",
+                      "secondary-fixed": "#e5e2e1",
+                      "on-tertiary": "#ffffff",
+                      "primary-fixed": "#6cfcbc",
+                      "on-tertiary-container": "#741818",
+                      "surface-tint": "#006c49",
+                      "surface-container": "#e8f0e8",
+                      "outline": "#6c7a71",
+                      "inverse-primary": "#4adfa2"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "edge-margin": "1.5rem",
+                      "stack-gap-sm": "0.25rem",
+                      "stack-gap-lg": "2rem",
+                      "container-max": "448px",
+                      "stack-gap-md": "0.75rem"
+              },
+              "fontFamily": {
+                      "headline-md": [
+                              "Newsreader"
+                      ],
+                      "label-caps": [
+                              "Be Vietnam Pro"
+                      ],
+                      "body-main": [
+                              "Be Vietnam Pro"
+                      ],
+                      "display-xl": [
+                              "Newsreader"
+                      ]
+              },
+              "fontSize": {
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.15em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-main": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-xl": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+            },
+          }
+        }
+    </script>
+<style>
+        body {
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+             font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col items-center">
+<!-- TopAppBar Container -->
+<div class="sticky top-0 z-40 w-full max-w-container-max bg-[#F0EFEA] dark:bg-stone-950 border-b-[1px] border-stone-900 shadow-none px-6 py-4 flex justify-between items-center transition-colors duration-200">
+<button aria-label="Close" class="text-emerald-600 dark:text-emerald-400 hover:bg-stone-200 dark:hover:bg-stone-800 transition-colors duration-200 p-2 rounded-DEFAULT">
+<span class="material-symbols-outlined text-[24px]">close</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-stone-900 dark:text-stone-100 font-bold tracking-tight">Recents</h1>
+<button aria-label="Next" class="font-label-caps text-label-caps text-on-background bg-primary-container px-4 py-2 rounded-DEFAULT border border-on-background shadow-[4px_4px_0px_0px_#1A1A1A] active:translate-y-1 active:translate-x-1 active:shadow-[0px_0px_0px_0px_#1A1A1A] transition-all">
+            NEXT (3)
+        </button>
+</div>
+<!-- Main Canvas -->
+<main class="w-full max-w-container-max flex-1 pb-24 relative bg-surface-container-lowest">
+<!-- Date Header -->
+<div class="px-edge-margin py-stack-gap-md bg-surface-container-lowest sticky top-[73px] z-30 bg-opacity-90 backdrop-blur-sm border-b border-outline-variant">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Today</h2>
+</div>
+<!-- Photo Grid -->
+<div class="grid grid-cols-3 gap-1 px-1 py-1">
+<!-- Photo Item 1 (Selected) -->
+<div class="relative aspect-square border border-on-background bg-surface-variant cursor-pointer group">
+<img alt="Retro classic car parked on a European city street" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Retro vintage car parked on a cobblestone European street during daytime, soft natural lighting, cinematic film photography style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuXC3nQ3HMQcJVtvF8fSG4Ycnc4gJ7fr7zVo4LPOrAGXcCp70gEbfzlshVnLWfkQypaku3afH98ON5_IHZhHJl3yIrT-k8i_R2rgfP-rxETx0ljj9rdVOCQIbwUYvzLZgblLR0jafwQBKf2gRbp8o8ZV3abMm9sN6do2i6KxwpUZv-2N0ikYRONhHN92pe_2Q6QWT_CJcZBU1r3c0WdKMctuP9KCMELz2ign8NiSHspLBCty2WgAnoj0s5nFD6LVUJPRgpybvX2IB0"/>
+<div class="absolute inset-0 bg-black/20 z-10 transition-opacity duration-300"></div>
+<div class="absolute top-2 right-2 z-20 w-6 h-6 rounded-full bg-primary flex items-center justify-center border-2 border-surface-container-lowest">
+<span class="font-label-caps text-[10px] text-on-primary">1</span>
+</div>
+</div>
+<!-- Photo Item 2 -->
+<div class="relative aspect-square border border-on-background bg-surface-variant cursor-pointer group overflow-hidden">
+<img alt="Close up of a film camera" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Close up detailed shot of a vintage 35mm film camera resting on a wooden table, warm sunlight casting shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrLrnTAygRIPYymKeDFWRjffMrZT4MV6jZY1NpHcvcucTMaIbe4lVKklBQTIFKWKriF1GUtnULQnFBLyjxnSvp-aMjfAiEuHL_nS-B61rsAVh8_nfCClkXyOFC9kL2K1yQOIgO1e9LogjWy2_DttxLCAM5N6iTp9keAvOBDr40YM_OYVEF6m4UYe0h-g1Osb53CQztGwYNqW6I0q6dRESBMk48mbQeOfZ-Iao9YGSFnDDEnDZRcAOg7z97oNCqqGPx2Zw5LCqvIAIw"/>
+<div class="absolute inset-0 bg-transparent hover:bg-black/10 z-10 transition-colors duration-200"></div>
+<div class="absolute top-2 right-2 z-20 w-6 h-6 rounded-full border-2 border-surface-container-lowest/50 backdrop-blur-sm"></div>
+</div>
+<!-- Photo Item 3 -->
+<div class="relative aspect-square border border-on-background bg-surface-variant cursor-pointer group overflow-hidden">
+<img alt="Pile of developed polaroid photos" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="A messy pile of developed polaroid instant photos scattered on a textured surface, nostalgic mood, soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDp34x3-n2Svz-ughU9rzoTywwphZVPlDff_bGOKysaAwYNfluZpcaNJcQRmfEnYF1HY20Z1mxYWJDN2XZaq1N6-0DW2ue0pP23FEepAg9lVCJiolniVpX6qMIRGMLe3DMbcmH6X5rFXmbVLbjnQvoYK3oPjjdNE-6SbZXYzUKOnES91sFb0V62xPZZBm4CHZAftrSmjE3KU9QGNZW8qyJ5G-6VL6AtEDyWsr0deY55o1ilpHu135687DeiduAGtN5LbgMNr9_UO9Bt"/>
+<div class="absolute inset-0 bg-transparent hover:bg-black/10 z-10 transition-colors duration-200"></div>
+<div class="absolute top-2 right-2 z-20 w-6 h-6 rounded-full border-2 border-surface-container-lowest/50 backdrop-blur-sm"></div>
+</div>
+<!-- Photo Item 4 (Selected) -->
+<div class="relative aspect-square border border-on-background bg-surface-variant cursor-pointer group overflow-hidden">
+<img alt="Abstract architecture minimal" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Minimalist abstract architectural shot of a modern building facade with strong geometric lines and shadows against a clear sky" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBV46HVTvcx5KeZN6q_Lbw94EKKH5Cl--hLfqpPebw0o5N5qOgT4-ERLPPlJBu8Nz8qsW-OMllncpIVfkawxGkfWIttMRFHG9WhOT7OmRepdPT5TRYhM0n-rqlrZABLiMBGO7LkLeNrlQVUUuGASUl70gSVQwByv_I-yop9wOgUcaX9CBX1H2l6kgp-ZykIqACn3aWOGll2s3kVaTtpp91AhtREX09mrvyIWwW8DjkXWL2GIQri65477TOjXx0uEcTAyiBRXNr-x1Gm"/>
+<div class="absolute inset-0 bg-black/20 z-10 transition-opacity duration-300"></div>
+<div class="absolute top-2 right-2 z-20 w-6 h-6 rounded-full bg-primary flex items-center justify-center border-2 border-surface-container-lowest">
+<span class="font-label-caps text-[10px] text-on-primary">2</span>
+</div>
+</div>
+<!-- Photo Item 5 -->
+<div class="relative aspect-square border border-on-background bg-surface-variant cursor-pointer group overflow-hidden">
+<img alt="Coffee cup on saucer next to magazine" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="A pristine white ceramic coffee cup on a saucer sitting next to an open independent art magazine on a marble cafe table" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJATx7TS-lyfIu7B5fmK0M282_sHCm73xksSCtly9R608L4n0XjWrP0ATfUzzjssYL2ZEHbRPA5AFtRsyuyR91PCElEXeToPWG6jbmm9ksCRZ6IYn-7fq3VPhkbzVk2wzTYQU0frtP2iO7bncNHKzn_JhU2gxhbMcQNvEAHygbKkLqxIkdPlBU_WL_1lgDx1hGZeeLk51YOb1BKSuh9W7ITsaOdrxe9kSBPSDVelsaDlPRqdOg11axDQ0AyOK1izlfayirou3sWUuQ"/>
+<div class="absolute inset-0 bg-transparent hover:bg-black/10 z-10 transition-colors duration-200"></div>
+<div class="absolute top-2 right-2 z-20 w-6 h-6 rounded-full border-2 border-surface-container-lowest/50 backdrop-blur-sm"></div>
+</div>
+<!-- Photo Item 6 -->
+<div class="relative aspect-square border border-on-background bg-surface-variant cursor-pointer group overflow-hidden">
+<img alt="Art gallery empty space" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Interior view of a minimalist contemporary art gallery with white walls, polished concrete floor, and natural light streaming in" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDX09oNW3EM3M0iyGpbAXz5QslBavvlq82wPujbNQEBrpSEH9-8GWmsMMhtx_8HsfHX8jkFEgasMq7_E0DGOl_ZpIsloZmoL1nbBjPIxB68VmVfdijhpUuLWXqgqwlS1JrFXv7Lsab3QaLU4ndukP_nKlxjNxMbAeCEVh0sxBndtRlA1F2KogprsBMmtgIuczidkkQr819T1DUXzuIl4ke3I5kR7mOUl2UEaqVoiXafrbPhK15yn87SOH_iDPXtimzKXgw93WI9XKhw"/>
+<div class="absolute inset-0 bg-transparent hover:bg-black/10 z-10 transition-colors duration-200"></div>
+<div class="absolute top-2 right-2 z-20 w-6 h-6 rounded-full border-2 border-surface-container-lowest/50 backdrop-blur-sm"></div>
+</div>
+</div>
+<!-- Date Header -->
+<div class="px-edge-margin py-stack-gap-md bg-surface-container-lowest border-b border-outline-variant mt-stack-gap-md">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Yesterday</h2>
+</div>
+<div class="grid grid-cols-3 gap-1 px-1 py-1">
+<!-- Photo Item 7 (Selected) -->
+<div class="relative aspect-square border border-on-background bg-surface-variant cursor-pointer group overflow-hidden">
+<img alt="Ocean horizon minimal" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Serene minimalist view of a calm ocean horizon meeting a pale blue sky, soft pastel colors, peaceful coastal atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkER7Ir9JssprsEuHyNb8ZbSlAmmHrNotAAua8va-415AJR7urrTcJEb77uXwDeD2V87V_R8aOZhVjimCQuCnxrj06DAw1mVvsr9Yd2Q1ZuOI6I9fEH0MF8X208W-2xz7bJp2wANfN_VnaQ0cWCOI9HZfbF-lhFsO2LbVuX7Qt0Jb8-b80Q5oVDdf60GILLe3vFzakbzQzFoSnr_4UrXZJS-IY1Tgk7SSV8uLFP090pf8RuPjZqATJgb1l7HYPgwDUSFH4op-ahR5s"/>
+<div class="absolute inset-0 bg-black/20 z-10 transition-opacity duration-300"></div>
+<div class="absolute top-2 right-2 z-20 w-6 h-6 rounded-full bg-primary flex items-center justify-center border-2 border-surface-container-lowest">
+<span class="font-label-caps text-[10px] text-on-primary">3</span>
+</div>
+</div>
+<!-- Photo Item 8 -->
+<div class="relative aspect-square border border-on-background bg-surface-variant cursor-pointer group overflow-hidden">
+<img alt="Hiker overlooking valley" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Distant silhouette of a solitary hiker standing on a rocky outcrop overlooking a vast lush green valley under dramatic clouds" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKrmTYOl1d0nDcoRA3RgHpAKeDyBbAp_Ey-gyWv5l4rBEpJV9mk9BH5aluqa8CuX1TWV-HtjUlJKXZX4G4TOVMCSRyGmtteYp69nV83fQmM2B0RhrYficQhCMHa04SUeKwc0jrHwdT4hdsDr0F5dr-aijf9E5Ye7NRQ0y9lHbJI6ahf8PVGBtXAsU-Y0Z4WKAA5ARDPrPXHI4xHj0KEDyPLNMDU98FSjRN-eW1jH6WxDAqLnPUzO62J15oM_kMvUYyM40uCo8StCBf"/>
+<div class="absolute inset-0 bg-transparent hover:bg-black/10 z-10 transition-colors duration-200"></div>
+<div class="absolute top-2 right-2 z-20 w-6 h-6 rounded-full border-2 border-surface-container-lowest/50 backdrop-blur-sm"></div>
+</div>
+<!-- Photo Item 9 -->
+<div class="relative aspect-square border border-on-background bg-surface-variant cursor-pointer group overflow-hidden">
+<img alt="Lake reflection misty" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Misty morning scene of a still alpine lake perfectly reflecting the surrounding dark evergreen forest, moody and cinematic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuADXVk-I1i6O5XqCvsO-YMF7hxgdatChVXUmuL0SLuh2mfHkJAY-VORDPCnhR2O5C-qO9yTNZ62bh8ryprdOgRqnhtnmXWaAYsVH785EqMtjT8UPgHv2mOuLc2RIXkfMx6HFaOBmilRTnuwoSmAsPue658pws1Bl0bxieuI5EfkS6nVrZYEFyThGv1td8PoJcNLHlYpc2czydZCoN82vwsLNrmstVjpZSqaXeOKeoT9B0_tETkhdnYlaH1oXwpBeR1-BBlJguuz-tJg"/>
+<div class="absolute inset-0 bg-transparent hover:bg-black/10 z-10 transition-colors duration-200"></div>
+<div class="absolute top-2 right-2 z-20 w-6 h-6 rounded-full border-2 border-surface-container-lowest/50 backdrop-blur-sm"></div>
+</div>
+</div>
+</main>
+</body></html>
