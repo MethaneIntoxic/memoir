@@ -7,7 +7,7 @@ import { verifyPackagedDistribution } from './packaged-smoke.mjs'
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const distDir = path.join(rootDir, 'desktop', 'dist')
 const unpackedExePath = path.join(distDir, 'win-unpacked', 'Memoir.exe')
-const maxPortableExeBytes = 1_950_000_000
+const MAX_PORTABLE_EXE_BYTES = 2_500_000_000
 const healthTimeoutMs = Number(process.env.MEMOIR_SINGLE_FILE_HEALTH_TIMEOUT_MS || 120000)
 
 function listTopLevelExeFiles(directory) {
@@ -121,8 +121,8 @@ async function main() {
   }
 
   for (const artifact of artifacts) {
-    if (artifact.bytes > maxPortableExeBytes) {
-      invalid.push(`${artifact.path} exceeds ${maxPortableExeBytes} bytes`)
+    if (artifact.bytes > MAX_PORTABLE_EXE_BYTES) {
+      invalid.push(`${artifact.path} exceeds ${MAX_PORTABLE_EXE_BYTES} bytes`)
     }
   }
 
@@ -152,7 +152,7 @@ async function main() {
   const result = {
     ok: invalid.length === 0,
     target: 'desktop/dist/*.exe',
-    maxPortableExeBytes,
+    maxPortableExeBytes: MAX_PORTABLE_EXE_BYTES,
     artifacts,
     packaged,
     health,
@@ -166,4 +166,8 @@ async function main() {
   }
 }
 
-await main()
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  await main()
+}
+
+export { MAX_PORTABLE_EXE_BYTES }

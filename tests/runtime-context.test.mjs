@@ -43,11 +43,14 @@ test('embedded chat request body carries manifest context size', () => {
     {
       runtimeModelId: 'Qwen3VL-2B-Instruct-Q4_K_M.gguf',
       contextSize: 8192,
+      maxTokens: 768,
     },
     [{ role: 'user', content: 'Return JSON.' }],
   )
 
   assert.equal(body.model, 'Qwen3VL-2B-Instruct-Q4_K_M.gguf')
   assert.equal(body.n_ctx, 8192)
+  assert.equal(body.max_tokens, 768)
+  assert.deepEqual(body.chat_template_kwargs, { enable_thinking: false })
   assert.deepEqual(body.response_format, { type: 'json_object' })
 })

@@ -30,6 +30,7 @@ const checks = [
   ['portable-core', exists('packages/memoir-core/portable.mjs')],
   ['mobile-capacitor-config', exists('mobile/capacitor.config.json')],
   ['mobile-package', exists('mobile/package.json')],
+  ['mobile-runtime-manifest', exists('mobile/runtime-manifest.json')],
   ['native-bridge-contracts', exists('native/BRIDGE_CONTRACTS.md')],
   ['native-runtime-strategy', exists('native/MOBILE_RUNTIME.md')],
   ['cross-platform-doc', exists('docs/11-cross-platform-release-architecture.md')],
@@ -61,11 +62,13 @@ const artifactStatus = {
   },
   android: {
     expected: releaseArtifacts.android,
+    sourcePresent: exists('mobile/android'),
     present: false,
     note: 'Requires Capacitor Android project, Gradle release build, and signing credentials.',
   },
   ios: {
     expected: releaseArtifacts.ios,
+    sourcePresent: exists('mobile/ios'),
     present: false,
     note: 'Requires macOS, Xcode 26+, archive signing, and App Store Connect upload.',
   },

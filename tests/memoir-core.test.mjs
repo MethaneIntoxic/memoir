@@ -4,6 +4,7 @@ import test from 'node:test'
 import {
   buildMemoirDiagnosticsExport,
   buildPortableMemoirArchive,
+  mobileRuntimeManifests,
   nativeBridgeContracts,
   parseGenerateMemoirPayload,
   parsePortableMemoirArchive,
@@ -120,6 +121,17 @@ test('release artifact and native bridge contracts encode the platform architect
   assert.equal(releaseArtifacts.ios.kind, 'xcode-archive')
   assert.deepEqual(nativeBridgeContracts.RuntimeAdapter, ['health', 'generate', 'rewrite', 'cancel'])
   assert.deepEqual(nativeBridgeContracts.ExportAdapter, ['writeMemoir', 'writeHtml', 'writePdf', 'share'])
+})
+
+test('mobile runtime manifests target the Qwen3.5 0.8B Q5 local model tier', () => {
+  for (const platform of ['android', 'ios']) {
+    assert.equal(mobileRuntimeManifests[platform].modelId, 'qwen3.5-0.8b-q5_K_M')
+    assert.equal(mobileRuntimeManifests[platform].quantization, 'Q5_K_M')
+    assert.equal(mobileRuntimeManifests[platform].modelFileName, 'Qwen_Qwen3.5-0.8B-Q5_K_M.gguf')
+    assert.equal(mobileRuntimeManifests[platform].modelSizeBytes, 625860768)
+    assert.equal(mobileRuntimeManifests[platform].maxTokens, 768)
+    assert.equal(mobileRuntimeManifests[platform].deliveryMode, platform === 'android' ? 'play-asset-delivery' : 'deferred-ios-archive')
+  }
 })
 
 test('server compose output conforms to the shared generated memoir payload schema', async () => {

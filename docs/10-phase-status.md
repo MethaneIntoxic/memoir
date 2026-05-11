@@ -91,7 +91,7 @@
 
 | # | Task | Notes |
 |---|------|-------|
-| 1 | **Portable EXE release smoke** | The default model tier is now Qwen3-VL 2B Q4 for the one-file portable EXE path; final release still needs a clean-machine smoke and signing pass. |
+| 1 | **Portable EXE release smoke** | The default model tier is now Qwen3.5 0.8B Q5 for the one-file portable EXE path; final release still needs a clean-machine smoke and signing pass. |
 | 2 | **macOS / Linux adapters** | Current embedded runtime is Windows-only. Cross-platform is out of scope for phase 9. |
 | 3 | **Encrypted storage** | IndexedDB storage is plaintext. A known, documented limitation. |
 | 4 | **Native Mobile App** | Current architecture is a responsive web app. A true native wrapper (Capacitor/React Native) would be required for iOS/Android app stores. |

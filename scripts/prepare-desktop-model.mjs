@@ -10,8 +10,27 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 const resourcesDir = path.join(repoRoot, 'desktop', 'resources')
 const modelsDir = path.join(resourcesDir, 'models')
 const manifestPath = path.join(resourcesDir, 'memoir-default-model.json')
+const DEFAULT_DESKTOP_MODEL_TIER = 'qwen35-0.8b-q5'
 
 const TIERS = {
+  'qwen35-0.8b-q5': {
+    modelId: 'qwen3.5-0.8b-q5_K_M',
+    runtimeModelId: 'Qwen_Qwen3.5-0.8B-Q5_K_M.gguf',
+    version: '1.0.0',
+    quantization: 'Q5_K_M',
+    readyFileName: 'Qwen_Qwen3.5-0.8B-Q5_K_M.ready',
+    contextSize: 8192,
+    source:
+      'https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/main/Qwen_Qwen3.5-0.8B-Q5_K_M.gguf',
+    sha256: '1214AFEBFE07D894E550505E3DAB6E913953A3FB123EA425D7D7731962479FCA',
+    sizeBytes: 625860768,
+    mmprojSource:
+      'https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/main/mmproj-Qwen_Qwen3.5-0.8B-f16.gguf',
+    mmprojFileName: 'mmproj-Qwen_Qwen3.5-0.8B-f16.gguf',
+    mmprojSha256: '1DC1351C82E41B48EDB55FD6DDFA7CA60FB5A16B3D5ABF3CE7054880DD022847',
+    mmprojSizeBytes: 204987104,
+    maxTokens: 768,
+  },
   'qwen3vl-q4': {
     modelId: 'qwen3-vl-2b-instruct-q4_K_M',
     runtimeModelId: 'Qwen3VL-2B-Instruct-Q4_K_M.gguf',
@@ -27,6 +46,7 @@ const TIERS = {
     mmprojFileName: 'mmproj-Qwen3VL-2B-Instruct-Q8_0.gguf',
     mmprojSha256: 'F9A68FABBA69C3B81E153367B2C7521030B0FA8BB0DE400C9599C8E6725F9C82',
     mmprojSizeBytes: 445053216,
+    maxTokens: 1024,
   },
   'qwen3vl-q3': {
     modelId: 'qwen3-vl-2b-instruct-q3_K_M',
@@ -44,12 +64,13 @@ const TIERS = {
     mmprojFileName: 'mmproj-Qwen3VL-2B-Instruct-Q8_0.gguf',
     mmprojSha256: 'F9A68FABBA69C3B81E153367B2C7521030B0FA8BB0DE400C9599C8E6725F9C82',
     mmprojSizeBytes: 445053216,
+    maxTokens: 1024,
   },
 }
 
 function parseArgs(argv) {
   const parsed = {
-    tier: process.env.MEMOIR_DESKTOP_MODEL_TIER || '',
+    tier: process.env.MEMOIR_DESKTOP_MODEL_TIER || DEFAULT_DESKTOP_MODEL_TIER,
     skipDownload: false,
   }
 
@@ -83,6 +104,7 @@ function toManifest(tierName, tier) {
     mmprojSha256: tier.mmprojSha256,
     mmprojSizeBytes: tier.mmprojSizeBytes,
     contextSize: tier.contextSize,
+    maxTokens: tier.maxTokens,
     bundled: true,
     runtime: 'embedded-llama',
     tier: tierName,
@@ -173,7 +195,7 @@ async function writeManifestAndReady(tierName, tier) {
 async function main() {
   const options = parseArgs(process.argv.slice(2))
   const currentManifest = await readExistingManifest()
-  const tierName = options.tier || currentManifest?.tier || 'qwen3vl-q4'
+  const tierName = options.tier || currentManifest?.tier || DEFAULT_DESKTOP_MODEL_TIER
   const tier = TIERS[tierName]
 
   if (!tier) {
@@ -234,4 +256,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   }
 }
 
-export { TIERS, toManifest }
+export { DEFAULT_DESKTOP_MODEL_TIER, TIERS, toManifest }

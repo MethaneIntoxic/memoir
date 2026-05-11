@@ -9,7 +9,7 @@ The current repository is not a packaged mobile app and not a hardened private-b
 - React and Vite browser client in `app/`.
 - Local Node HTTP server in `server/server.mjs` with `GET /api/health`, `POST /api/generate`, `POST /api/generation-jobs`, and `GET /api/generation-jobs/:jobId`.
 - Runtime abstraction in `server/runtime/` that supports the existing Ollama path and an embedded `llama.cpp`-style packaged runtime path.
-- Optional live drafting and rewrite via local Ollama using `gemma4:e2b-instruct-q4_K_M` by default, plus a bundled desktop-model manifest targeting the smaller Qwen3-VL 2B single-file release tier.
+- Optional live drafting and rewrite via local Ollama using `gemma4:e2b-instruct-q4_K_M` by default, plus a bundled desktop-model manifest targeting the Qwen3.5 0.8B Q5_K_M single-file release tier.
 - Grounded fallback draft and rewrite responses when Ollama is offline, missing the model, or returns unusable output.
 - Browser-local archive stored in IndexedDB with migration from older `localStorage` keys.
 - HTML export download and browser print flow for PDF saving.
@@ -85,13 +85,13 @@ If Ollama is unavailable or the model is not installed, the UI still works and t
 The repository now includes a desktop shell scaffold under `desktop/`.
 
 - `npm run dev:desktop` builds the renderer and launches the Electron shell.
-- `npm run prepare:desktop-model` downloads and verifies the selected packaged model tier. Use `-- --tier qwen3vl-q3` only if the Q4 portable EXE fails the size gate.
+- `npm run prepare:desktop-model` downloads and verifies the selected packaged model tier. The default tier is `qwen35-0.8b-q5`; use `-- --tier qwen3vl-q4` only when testing the larger fallback tier.
 - `npm run dist:desktop` builds the diagnostic Windows ZIP and unpacked smoke target.
 - `npm run dist:desktop:single-file` builds the primary one-file Windows portable EXE at `desktop/dist/Memoir-0.1.0-portable.exe`.
 - The desktop shell starts the local Memoir server automatically.
 - In packaged mode, the server is prepared to prefer bundled embedded-runtime assets over Ollama.
 
-The one-file Windows release uses the Qwen3-VL 2B Q4_K_M model plus the Q8 mmproj by default. The older Gemma bundle remains a future large/high-quality model pack candidate, not the default portable EXE payload.
+The one-file Windows release uses `Qwen_Qwen3.5-0.8B-Q5_K_M.gguf` plus `mmproj-Qwen_Qwen3.5-0.8B-f16.gguf` by default. The hard shipping gate is 2.5 GB; the Qwen3.5 Q5 tier is kept well below that while preserving vision input support.
 
 ## Current User Flow
 
@@ -140,5 +140,6 @@ Not supported as a release promise:
 - `docs/06-platform-support-and-performance.md`: support statement and realistic prototype platform expectations.
 - `docs/07-testing-and-release.md`: current validation depth and release framing.
 - `docs/13-single-file-windows-portable-exe.md`: Windows portable EXE model tier, packaging, and smoke-gate plan.
+- `docs/14-consolidation-audit.md`: canonical root and safe hash-audited consolidation workflow.
 - `docs/08-delivery-roadmap-and-backlog.md`: grounded interpretation of prototype phases 0 to 9 and the next work after them.
 - `docs/09-risk-register.md`: current prototype risks and release blockers.

@@ -3,10 +3,29 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
+import { MAX_PORTABLE_EXE_BYTES } from '../scripts/desktop-single-file-smoke.mjs'
 import { verifyPackagedDistribution } from '../scripts/packaged-smoke.mjs'
-import { TIERS, toManifest } from '../scripts/prepare-desktop-model.mjs'
+import { DEFAULT_DESKTOP_MODEL_TIER, TIERS, toManifest } from '../scripts/prepare-desktop-model.mjs'
 
-test('desktop model prep manifest selects Qwen3-VL Q4 for the portable EXE tier', () => {
+test('desktop model prep defaults to Qwen3.5 0.8B Q5 for the portable EXE tier', () => {
+  assert.equal(DEFAULT_DESKTOP_MODEL_TIER, 'qwen35-0.8b-q5')
+
+  const manifest = toManifest(DEFAULT_DESKTOP_MODEL_TIER, TIERS[DEFAULT_DESKTOP_MODEL_TIER])
+
+  assert.equal(manifest.modelId, 'qwen3.5-0.8b-q5_K_M')
+  assert.equal(manifest.runtimeModelId, 'Qwen_Qwen3.5-0.8B-Q5_K_M.gguf')
+  assert.equal(manifest.relativeModelPath, 'models/Qwen_Qwen3.5-0.8B-Q5_K_M.gguf')
+  assert.equal(manifest.relativeMmprojPath, 'models/mmproj-Qwen_Qwen3.5-0.8B-f16.gguf')
+  assert.equal(manifest.relativeReadyMarker, 'models/Qwen_Qwen3.5-0.8B-Q5_K_M.ready')
+  assert.equal(manifest.contextSize, 8192)
+  assert.equal(manifest.sizeBytes, 625860768)
+  assert.equal(manifest.sha256, '1214AFEBFE07D894E550505E3DAB6E913953A3FB123EA425D7D7731962479FCA')
+  assert.equal(manifest.mmprojSizeBytes, 204987104)
+  assert.equal(manifest.mmprojSha256, '1DC1351C82E41B48EDB55FD6DDFA7CA60FB5A16B3D5ABF3CE7054880DD022847')
+  assert.equal(manifest.tier, 'qwen35-0.8b-q5')
+})
+
+test('desktop model prep keeps the previous Qwen3-VL tier available as a fallback', () => {
   const manifest = toManifest('qwen3vl-q4', TIERS['qwen3vl-q4'])
 
   assert.equal(manifest.modelId, 'qwen3-vl-2b-instruct-q4_K_M')
@@ -16,6 +35,10 @@ test('desktop model prep manifest selects Qwen3-VL Q4 for the portable EXE tier'
   assert.equal(manifest.contextSize, 8192)
   assert.equal(manifest.sizeBytes, 1107409952)
   assert.equal(manifest.mmprojSizeBytes, 445053216)
+})
+
+test('single-file desktop smoke uses the 2.5 GB packaging hard gate', () => {
+  assert.equal(MAX_PORTABLE_EXE_BYTES, 2_500_000_000)
 })
 
 test('verifyPackagedDistribution accepts a complete unpacked Memoir distribution', async () => {

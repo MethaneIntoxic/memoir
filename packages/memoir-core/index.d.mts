@@ -86,6 +86,24 @@ export type PortableMemoirResult = {
 export const PORTABLE_MEMOIR_FORMAT: 'com.memoir.portable'
 export const PORTABLE_MEMOIR_MIME: 'application/vnd.memoir+zip'
 export const PORTABLE_MEMOIR_VERSION: 1
+export const mobileRuntimeManifests: Record<
+  'android' | 'ios',
+  {
+    modelId: string
+    runtimeId: string
+    quantization: string
+    modelFileName: string
+    modelSha256: string
+    modelSizeBytes: number
+    mmprojFileName: string
+    mmprojSha256: string
+    mmprojSizeBytes: number
+    contextSize: number
+    maxTokens: number
+    minimumMemoryClass: string
+    deliveryMode: string
+  }
+>
 export const nativeBridgeContracts: Record<string, string[]>
 export const releaseArtifacts: Record<string, { kind: string; extension: string; storeUpload: boolean }>
 export const themes: Theme[]

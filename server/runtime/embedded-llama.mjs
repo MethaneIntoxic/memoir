@@ -7,7 +7,7 @@ import { parseModelJsonResponse } from './json-parser.mjs'
 const REQUEST_TIMEOUT_MS = Number(process.env.MEMOIR_REQUEST_TIMEOUT_MS || 60000)
 const EMBEDDED_HOST = process.env.MEMOIR_EMBEDDED_HOST || '127.0.0.1'
 const EMBEDDED_PORT = Number(process.env.MEMOIR_EMBEDDED_PORT || 8791)
-const DEFAULT_BUNDLED_MODEL_ID = process.env.MEMOIR_BUNDLED_MODEL_ID || 'qwen3-vl-2b-instruct-q4_K_M'
+const DEFAULT_BUNDLED_MODEL_ID = process.env.MEMOIR_BUNDLED_MODEL_ID || 'qwen3.5-0.8b-q5_K_M'
 const STARTUP_TIMEOUT_MS = Number(process.env.MEMOIR_EMBEDDED_STARTUP_TIMEOUT_MS || 30000)
 const POLL_INTERVAL_MS = 200
 
@@ -80,6 +80,11 @@ function resolveEmbeddedRuntimeConfig(options = {}) {
     Number(options.contextSize || manifest?.contextSize) > 0
       ? Math.floor(Number(options.contextSize || manifest?.contextSize))
       : 4096
+  const maxTokens =
+    Number.isFinite(Number(options.maxTokens || manifest?.maxTokens || process.env.MEMOIR_MODEL_MAX_TOKENS)) &&
+    Number(options.maxTokens || manifest?.maxTokens || process.env.MEMOIR_MODEL_MAX_TOKENS) > 0
+      ? Math.floor(Number(options.maxTokens || manifest?.maxTokens || process.env.MEMOIR_MODEL_MAX_TOKENS))
+      : 768
 
   const modelPresent = Boolean(modelPath && existsSync(modelPath))
   const mmprojPresent = Boolean(mmprojPath && existsSync(mmprojPath))
@@ -97,6 +102,7 @@ function resolveEmbeddedRuntimeConfig(options = {}) {
     modelId,
     runtimeModelId,
     contextSize,
+    maxTokens,
     host: EMBEDDED_HOST,
     port: EMBEDDED_PORT,
     bundled: true,
@@ -354,6 +360,8 @@ function buildEmbeddedChatRequestBody(config, messages) {
     model: config.runtimeModelId,
     response_format: { type: 'json_object' },
     n_ctx: config.contextSize || 4096,
+    max_tokens: config.maxTokens || 768,
+    chat_template_kwargs: { enable_thinking: false },
     messages: toOpenAiMessages(messages),
   }
 }

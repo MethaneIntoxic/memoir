@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Memoir</string>
+    <string name="title_activity_main">Memoir</string>
+    <string name="package_name">local.memoir.mobile</string>
+    <string name="custom_url_scheme">local.memoir.mobile</string>
+</resources>

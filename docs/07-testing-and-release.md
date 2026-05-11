@@ -12,6 +12,7 @@ The current repo has a real but narrow validation loop.
 - `npm run lint` checks the browser client with ESLint.
 - `npm run smoke:packaged` validates the unpacked Windows distribution resource layout.
 - `npm run smoke:desktop-single-file` validates the top-level portable EXE, size gate, packaged resource layout, and embedded runtime health.
+- `npm run smoke:desktop-quality` sends fixture images through the packaged embedded runtime and rejects fallback-only, invalid, or looping generation output.
 
 ### What the shipped test actually covers
 
@@ -47,8 +48,9 @@ For the Windows one-file portable distribution:
 1. Run `npm run prepare:desktop-model`.
 2. Run `npm run dist:desktop:single-file`.
 3. Run `npm run smoke:desktop-single-file`.
-4. Launch `desktop/dist/Memoir-0.1.0-portable.exe`.
-5. Confirm the desktop window opens without unzipping or installing and the health banner reports the packaged local AI path honestly.
+4. Run `npm run smoke:desktop-quality`.
+5. Launch `desktop/dist/Memoir-0.1.0-portable.exe`.
+6. Confirm the desktop window opens without unzipping or installing and the health banner reports the packaged local AI path honestly.
 
 ## Release Framing
 
@@ -68,7 +70,7 @@ It should not be described as:
 
 - Browser IndexedDB is the active saved-archive persistence layer.
 - Export leaves the limited local boundary.
-- Dev mode can use optional local Ollama, while the Windows portable distribution carries an embedded llama runtime and bundled Qwen3-VL model tier.
+- Dev mode can use optional local Ollama, while the Windows portable distribution carries an embedded llama runtime and bundled Qwen3.5 0.8B Q5_K_M model tier.
 - The fallback path can be visibly less polished than the live path.
 - Automated coverage is broader than the first prototype pass, but still too thin for broader release claims.
 

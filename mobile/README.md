@@ -26,4 +26,6 @@ Android builds require Android Studio/Gradle. iOS builds require macOS with Xcod
 
 ## Runtime Rule
 
-Do not copy the desktop GGUF into the mobile shell by default. Mobile model assets must use a separate manifest, smaller quantization, and platform-specific delivery review.
+Do not copy arbitrary desktop GGUF files into the mobile shell by default. Mobile model assets are pinned by `runtime-manifest.json`; the v1 offline target is `Qwen_Qwen3.5-0.8B-Q5_K_M.gguf` plus `mmproj-Qwen_Qwen3.5-0.8B-f16.gguf`.
+
+Android is the first build path and should use Play Asset Delivery for the model payload. iOS source/config can be generated through Capacitor, but final archive and upload are deferred until macOS with Xcode 26 or later is available.

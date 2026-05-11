@@ -7,7 +7,7 @@ Current direction:
 - Electron starts the existing local Memoir server automatically.
 - The packaged renderer loads the built Vite app from disk.
 - The packaged server prefers the embedded local runtime when bundled resources are present.
-- The default bundled model target is `qwen3-vl-2b-instruct-q4_K_M`.
+- The default bundled model target is `qwen3.5-0.8b-q5_K_M`.
 
 What is scaffolded here now:
 

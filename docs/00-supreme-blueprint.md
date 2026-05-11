@@ -25,11 +25,12 @@ Everything in this doc set should be read through that lens. If a capability is 
 - Browser-local archive saved in IndexedDB, with migration from older `localStorage` keys.
 - HTML export download and browser print to PDF.
 - Basic runtime diagnostics surfaced in the UI.
+- Windows portable packaging with an embedded Qwen3.5 0.8B Q5_K_M local model tier.
 
 ### What does not exist yet
 
 - encrypted storage at rest,
-- native mobile packaging,
+- shipped native mobile packaging,
 - a secure media vault,
 - durable background job recovery,
 - schema migrations or document revision history,
