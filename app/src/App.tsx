@@ -17,6 +17,7 @@ import {
 import {
   exportMemoirDiagnostics,
   exportMemoirHtml,
+  exportInstagramSlides,
   exportPortableMemoir,
   importPortableMemoirFile,
   openMemoirPrintPreview,
@@ -32,6 +33,7 @@ import { ArchiveScreen } from './memoir/ui/ArchiveScreen.tsx'
 import { ComposeScreen } from './memoir/ui/ComposeScreen.tsx'
 import { EditorScreen } from './memoir/ui/EditorScreen.tsx'
 import { MemoirShell } from './memoir/ui/MemoirShell.tsx'
+import { ReaderScreen } from './memoir/ui/ReaderScreen.tsx'
 
 function createIdleGenerationProgress(): ComposeGenerationProgress {
   return {
@@ -66,6 +68,10 @@ function describeLocalAiHealth(payload: Record<string, unknown>): string {
     return 'Bundled local AI is unavailable, fallback drafting will be used'
   }
 
+  if (runtime === 'android-native-llama') {
+    return 'Android local AI is unavailable until the native runtime is bundled'
+  }
+
   return 'Local AI server is unavailable, fallback drafting will be used'
 }
 
@@ -87,7 +93,7 @@ function isDebugUiEnabled(): boolean {
 }
 
 function App() {
-  const [view, setView] = useState<'archive' | 'compose' | 'editor'>('archive')
+  const [view, setView] = useState<'archive' | 'compose' | 'reader' | 'editor'>('archive')
   const [memoirs, setMemoirs] = useState<Memoir[]>([])
   const [archiveReady, setArchiveReady] = useState(false)
   const [assets, setAssets] = useState<Asset[]>([])
@@ -149,11 +155,14 @@ function App() {
   useEffect(() => {
     let cancelled = false
 
-    fetch(`${resolvedApiBase}/health`)
-      .then((response) => response.json())
+    const healthRequest = window.memoirAndroidAi?.health
+      ? window.memoirAndroidAi.health()
+      : fetch(`${resolvedApiBase}/health`).then((response) => response.json())
+
+    healthRequest
       .then((payload) => {
         if (!cancelled) {
-          setHealth(describeLocalAiHealth(payload))
+          setHealth(describeLocalAiHealth(payload as Record<string, unknown>))
         }
       })
       .catch(() => {
@@ -242,7 +251,7 @@ function App() {
       const memoir = createMemoirDraft({ assets, tone, theme, notes, musicCue, payload })
 
       setDraft(memoir)
-      setView('editor')
+      setView('reader')
       setStage('Draft ready')
     } catch (error) {
       if (generationRunId.current !== runId) {
@@ -302,7 +311,7 @@ function App() {
     }
 
     setDraft(memoir)
-    setView('editor')
+    setView('reader')
     setTheme(memoir.theme)
     setTone(memoir.tone)
     setGenerationProgress(createIdleGenerationProgress())
@@ -364,7 +373,7 @@ function App() {
       setTheme(importedMemoir.theme)
       setTone(importedMemoir.tone)
       setGenerationProgress(createIdleGenerationProgress())
-      setView('editor')
+      setView('reader')
       setStage('Portable memoir imported')
     } catch (error) {
       setStage(error instanceof Error ? error.message : 'Portable memoir import failed')
@@ -435,6 +444,19 @@ function App() {
     }
   }
 
+  async function exportInstagram() {
+    if (!draft) {
+      return
+    }
+
+    try {
+      await exportInstagramSlides(draft)
+      setStage('Instagram slides exported')
+    } catch (error) {
+      setStage(error instanceof Error ? error.message : 'Instagram slide export failed')
+    }
+  }
+
   function printPdf() {
     if (draft) {
       openMemoirPrintPreview(draft)
@@ -458,6 +480,7 @@ function App() {
       stage={stage}
       onArchive={() => setView('archive')}
       onCreate={startNewMemoir}
+      onStory={() => (draft ? setView('reader') : setView('archive'))}
     >
       {view === 'archive' ? (
         <ArchiveScreen
@@ -508,6 +531,17 @@ function App() {
           onExportPortable={exportPortable}
           onPrintPdf={printPdf}
           onDiagnostics={downloadDiagnostics}
+        />
+      ) : null}
+
+      {view === 'reader' && draft ? (
+        <ReaderScreen
+          draft={draft}
+          onArchive={() => setView('archive')}
+          onEdit={() => setView('editor')}
+          onSave={persistMemoir}
+          onExportHtml={exportHtml}
+          onExportInstagram={exportInstagram}
         />
       ) : null}
     </MemoirShell>

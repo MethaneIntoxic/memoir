@@ -4,10 +4,11 @@ Memoir is on-device first. Mobile runtime work must not depend on a hosted AI se
 
 ## Android
 
-- Build native inference with Android NDK.
-- Package runtime libraries inside the AAB.
-- Use Play Asset Delivery for the Qwen3.5 0.8B Q5 model files pinned in `../mobile/runtime-manifest.json`.
-- Keep the base module below Play's practical 200 MB target.
+- Build native inference with Android NDK and a pinned llama.cpp checkout generated during the Gradle build.
+- Package the `memoirllama` JNI runtime library inside the APK.
+- Copy the Qwen3.5 0.8B Q5 model files pinned in `../mobile/runtime-manifest.json` into generated Android APK assets from `desktop/resources/models`.
+- Do not commit GGUF model assets; the Gradle build validates local presence and copies them during `preBuild`.
+- Android v1 uses text-only llama.cpp drafting from the ordered asset ids, tone, notes, and music cue. The f16 projector remains packaged and verified, but native multimodal image embedding is a later pass.
 
 ## iOS
 
@@ -29,4 +30,4 @@ Each platform runtime needs a manifest with:
 - minimum memory class,
 - delivery mode: bundled, install-time asset, fast-follow asset, or developer-only.
 
-The mobile target is `qwen35-0.8b-q5`, using `Qwen_Qwen3.5-0.8B-Q5_K_M.gguf` and `mmproj-Qwen_Qwen3.5-0.8B-f16.gguf`. Platform delivery still differs: Android uses Play Asset Delivery, while iOS archive work is deferred until Mac/Xcode access exists.
+The mobile target is `qwen35-0.8b-q5`, using `Qwen_Qwen3.5-0.8B-Q5_K_M.gguf` and `mmproj-Qwen_Qwen3.5-0.8B-f16.gguf`. Platform delivery still differs: Android uses direct APK assets, while iOS archive work is deferred until Mac/Xcode access exists.

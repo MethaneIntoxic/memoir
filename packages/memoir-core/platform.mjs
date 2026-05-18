@@ -1,18 +1,13 @@
 const releaseArtifacts = {
-  web: {
-    kind: 'static-hosting-bundle',
-    extension: 'zip',
-    storeUpload: false,
-  },
   windows: {
     kind: 'portable-or-installer-exe',
     extension: 'exe',
     storeUpload: false,
   },
   android: {
-    kind: 'android-app-bundle',
-    extension: 'aab',
-    storeUpload: true,
+    kind: 'android-sideload-apk',
+    extension: 'apk',
+    storeUpload: false,
   },
   ios: {
     kind: 'xcode-archive',
@@ -26,6 +21,7 @@ const nativeBridgeContracts = {
   PhotoAdapter: ['pick', 'sanitize'],
   RuntimeAdapter: ['health', 'generate', 'rewrite', 'cancel'],
   ExportAdapter: ['writeMemoir', 'writeHtml', 'writePdf', 'share'],
+  AndroidAiBridge: ['health', 'generateMemoir', 'cancelGeneration'],
 }
 
 const qwen35Q5Runtime = {
@@ -46,7 +42,7 @@ const qwen35Q5Runtime = {
 const mobileRuntimeManifests = {
   android: {
     ...qwen35Q5Runtime,
-    deliveryMode: 'play-asset-delivery',
+    deliveryMode: 'direct-apk-assets',
   },
   ios: {
     ...qwen35Q5Runtime,

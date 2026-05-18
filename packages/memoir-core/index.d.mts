@@ -76,6 +76,33 @@ export type MemoirDiagnosticsExportPayload = {
   }
 }
 
+export type MemoirSlide = {
+  id: string
+  index: number
+  count: number
+  width: 1080
+  height: 1350
+  aspectRatio: '4:5'
+  fileName: string
+  title: string
+  summary: string
+  quote: string
+  tone: Tone
+  theme: Theme
+  caption: string
+  body: string
+  rawTitle: string
+  rawSummary: string
+  rawQuote: string
+  rawCaption: string
+  rawBody: string
+  asset: Asset
+}
+
+export type InstagramFeedSlideExportOptions = {
+  renderSlide: (slide: MemoirSlide) => Uint8Array | Promise<Uint8Array>
+}
+
 export type PortableMemoirResult = {
   manifest: Record<string, unknown>
   memoir: Memoir
@@ -105,16 +132,21 @@ export const mobileRuntimeManifests: Record<
   }
 >
 export const nativeBridgeContracts: Record<string, string[]>
-export const releaseArtifacts: Record<string, { kind: string; extension: string; storeUpload: boolean }>
+export const releaseArtifacts: Record<'windows' | 'android' | 'ios', { kind: string; extension: string; storeUpload: boolean }>
 export const themes: Theme[]
 export const tones: Tone[]
 
 export function buildDiagnosticsFileName(title: string): string
 export function buildMemoirDiagnosticsExport(memoir: Memoir): MemoirDiagnosticsExportPayload
 export function buildMemoirFileName(title: string, extension?: string): string
+export function buildMemoirSlides(memoir: Memoir): MemoirSlide[]
 export function buildPortableMemoirArchive(memoir: Memoir): Uint8Array
 export function buildPortableMemoirFileName(title: string): string
 export function escapeHtml(text: string): string
+export function exportInstagramFeedSlides(
+  memoir: Memoir,
+  options: InstagramFeedSlideExportOptions,
+): Promise<Uint8Array>
 export function normalizeApiBase(value: string): string
 export function parseGenerateMemoirPayload(value: unknown): GenerateMemoirPayload | null
 export function parseMemoir(value: unknown): Memoir | null

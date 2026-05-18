@@ -36,18 +36,12 @@ const checks = [
   ['cross-platform-doc', exists('docs/11-cross-platform-release-architecture.md')],
   ['store-checklist', exists('docs/12-store-release-checklist.md')],
   ['single-file-windows-doc', exists('docs/13-single-file-windows-portable-exe.md')],
-  ['web-package-script', exists('scripts/package-web.mjs')],
 ]
 
 const windowsSingleFileArtifacts = listTopLevelExeFiles('desktop/dist')
 const windowsZipPath = 'desktop/dist/Memoir-0.1.0-win.zip'
 
 const artifactStatus = {
-  web: {
-    expected: releaseArtifacts.web,
-    present: exists('dist/web/memoir-web.zip'),
-    bytes: fileSize('dist/web/memoir-web.zip'),
-  },
   windows: {
     expected: releaseArtifacts.windows,
     unpackedPresent: exists('desktop/dist/win-unpacked/Memoir.exe'),
@@ -63,8 +57,9 @@ const artifactStatus = {
   android: {
     expected: releaseArtifacts.android,
     sourcePresent: exists('mobile/android'),
-    present: false,
-    note: 'Requires Capacitor Android project, Gradle release build, and signing credentials.',
+    present: exists('mobile/android/app/build/outputs/apk/release/app-release.apk'),
+    bytes: fileSize('mobile/android/app/build/outputs/apk/release/app-release.apk'),
+    note: 'Run npm --prefix mobile run build:android:apk with Android SDK/JDK and signing credentials for the direct APK.',
   },
   ios: {
     expected: releaseArtifacts.ios,

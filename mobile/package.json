@@ -7,6 +7,7 @@
     "cap:add:android": "npx cap add android",
     "cap:add:ios": "npx cap add ios --packagemanager SPM",
     "cap:sync": "npm run build:web && npx cap sync",
+    "build:android:apk": "npm run cap:sync && cd android && gradlew.bat :app:assembleRelease",
     "open:android": "npx cap open android",
     "open:ios": "npx cap open ios"
   },

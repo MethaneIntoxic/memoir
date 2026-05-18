@@ -1,16 +1,14 @@
 .app {
-  width: min(100%, 430px);
+  --app-shell-width: 430px;
+  --bottom-nav-space: 112px;
+  width: min(100%, var(--app-shell-width));
   min-height: 100svh;
   margin: 0 auto;
-  padding: 0 12px 94px;
-}
-
-.app.view-compose {
-  width: min(100%, 760px);
+  padding: 0 12px var(--bottom-nav-space);
 }
 
 .app.view-editor {
-  width: min(100%, 1080px);
+  --app-shell-width: 1080px;
 }
 
 .topbar {
@@ -44,7 +42,8 @@
 .section-heading h2,
 .compose-hero h2,
 .memoir-cover .title-input,
-.storyboard-section h2 {
+.storyboard-section h2,
+.reader-cover h2 {
   font-family: var(--serif);
   font-weight: 500;
 }
@@ -226,7 +225,8 @@ button:disabled {
 .section-heading h2,
 .compose-hero h2,
 .empty-copy h2,
-.storyboard-section h2 {
+.storyboard-section h2,
+.reader-cover h2 {
   margin: 0;
   color: var(--ink);
   font-size: clamp(2.7rem, 13vw, 3.8rem);
@@ -236,6 +236,7 @@ button:disabled {
 .section-subcopy,
 .section-heading p,
 .compose-hero p,
+.reader-cover p,
 .empty-copy p,
 .panel-heading p,
 .compose-summary dd,
@@ -245,7 +246,8 @@ button:disabled {
 .storyboard-section .section-heading > p,
 .progress-note,
 .diagnostic-line,
-.save-state {
+.save-state,
+.reader-slide-copy p {
   margin: 0;
   color: var(--muted);
 }
@@ -362,7 +364,7 @@ button:disabled {
 
 .compose-hero {
   display: grid;
-  gap: 18px;
+  gap: 14px;
   padding: 16px 0 0;
 }
 
@@ -448,9 +450,12 @@ button:disabled {
 .compose-panel,
 .compose-summary,
 .editor-sidebar,
+.reader-cover,
 .quote-panel,
 .memoir-cover,
-.storyboard-section {
+.storyboard-section,
+.reader-slide,
+.reader-actions {
   border: 1px solid var(--ink);
   border-radius: 0;
   background: rgba(255, 255, 255, 0.64);
@@ -460,7 +465,9 @@ button:disabled {
 .compose-panel,
 .compose-summary,
 .editor-sidebar,
-.storyboard-section {
+.storyboard-section,
+.reader-cover,
+.reader-actions {
   padding: 18px;
 }
 
@@ -668,6 +675,7 @@ button:disabled {
   min-width: 0;
 }
 
+.reader-toolbar,
 .editor-toolbar {
   display: flex;
   align-items: center;
@@ -751,6 +759,81 @@ button:disabled {
   scrollbar-color: rgba(36, 32, 32, 0.32) transparent;
 }
 
+.reader-screen {
+  gap: 16px;
+}
+
+.reader-cover {
+  display: grid;
+  gap: 10px;
+}
+
+.reader-cover h2 {
+  margin: 0;
+}
+
+.reader-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(292px, 100%);
+  gap: 14px;
+  overflow-x: auto;
+  padding: 2px 0 14px;
+  scroll-snap-type: x mandatory;
+  scrollbar-color: rgba(36, 32, 32, 0.32) transparent;
+}
+
+.reader-slide {
+  display: grid;
+  overflow: hidden;
+  scroll-snap-align: center;
+}
+
+.reader-slide-media {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  background: var(--blue-gray);
+}
+
+.reader-slide-media img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.reader-slide-media span {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--ink);
+  background: rgba(255, 249, 247, 0.9);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.reader-slide-copy {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.reader-slide-copy h3 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1.55rem;
+  font-weight: 500;
+  line-height: 1.08;
+}
+
+.reader-actions {
+  display: grid;
+  gap: 10px;
+}
+
 .story-card {
   display: grid;
   grid-template-rows: auto auto minmax(130px, 1fr) auto;
@@ -830,12 +913,10 @@ button:disabled {
 }
 
 .bottom-nav {
-  position: fixed;
-  left: 50%;
-  bottom: 0;
+  position: static;
   z-index: 10;
-  width: min(100%, 430px);
-  transform: translateX(-50%);
+  width: min(100vw, var(--app-shell-width));
+  margin: 28px calc((100% - min(100vw, var(--app-shell-width))) / 2) calc(var(--bottom-nav-space) * -0.55);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   border-top: 1px solid var(--ink);
@@ -896,7 +977,7 @@ button:disabled {
   border: 0;
 }
 
-@media (min-width: 720px) {
+  @media (min-width: 720px) {
   .empty-archive {
     gap: 18px;
     padding-top: 28px;
@@ -919,18 +1000,6 @@ button:disabled {
     margin-bottom: 96px;
   }
 
-  .app.view-compose {
-    width: min(100%, 760px);
-  }
-
-  .compose-grid {
-    grid-template-columns: minmax(0, 1.3fr) minmax(240px, 0.7fr);
-  }
-
-  .photo-strip {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-
   .progress-stage-list {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -938,7 +1007,7 @@ button:disabled {
 
 @media (min-width: 980px) {
   .app.view-editor {
-    width: min(100%, 1080px);
+    --app-shell-width: 1080px;
   }
 
   .editor-screen {

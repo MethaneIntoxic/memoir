@@ -14,13 +14,14 @@ npm run build:web
 npm run cap:add:android
 npm run cap:add:ios
 npm run cap:sync
+npm run build:android:apk
 ```
 
-Android builds require Android Studio/Gradle. iOS builds require macOS with Xcode 26 or later for App Store uploads.
+Android builds require JDK 21 plus Android SDK platform 36, build-tools 36, CMake, and NDK. iOS builds require macOS with Xcode 26 or later for App Store uploads.
 
 ## Release Artifacts
 
-- Android store upload: signed `.aab`.
+- Android sideload release: signed `.apk` at `android/app/build/outputs/apk/release/app-release.apk`.
 - iOS store upload: Xcode archive uploaded to App Store Connect.
 - Ad hoc iOS sharing may produce `.ipa`, but `.ipa` is not the primary App Store upload path.
 
@@ -28,4 +29,6 @@ Android builds require Android Studio/Gradle. iOS builds require macOS with Xcod
 
 Do not copy arbitrary desktop GGUF files into the mobile shell by default. Mobile model assets are pinned by `runtime-manifest.json`; the v1 offline target is `Qwen_Qwen3.5-0.8B-Q5_K_M.gguf` plus `mmproj-Qwen_Qwen3.5-0.8B-f16.gguf`.
 
-Android is the first build path and should use Play Asset Delivery for the model payload. iOS source/config can be generated through Capacitor, but final archive and upload are deferred until macOS with Xcode 26 or later is available.
+Android is the first build path and uses generated direct APK assets for the model payload. iOS source/config can be generated through Capacitor, but final archive and upload are deferred until macOS with Xcode 26 or later is available.
+
+The Android bridge builds a pinned llama.cpp JNI runtime during Gradle `preBuild` and runs CPU-only text generation on-device. It uses the ordered asset ids, tone, notes, and music cue for v1 drafting; projector-backed image embedding is packaged but not yet connected to native generation.

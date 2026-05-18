@@ -117,10 +117,11 @@ test('diagnostics export excludes raw image data and declares portable memoir su
 })
 
 test('release artifact and native bridge contracts encode the platform architecture', () => {
-  assert.equal(releaseArtifacts.android.extension, 'aab')
+  assert.equal(releaseArtifacts.android.extension, 'apk')
   assert.equal(releaseArtifacts.ios.kind, 'xcode-archive')
   assert.deepEqual(nativeBridgeContracts.RuntimeAdapter, ['health', 'generate', 'rewrite', 'cancel'])
   assert.deepEqual(nativeBridgeContracts.ExportAdapter, ['writeMemoir', 'writeHtml', 'writePdf', 'share'])
+  assert.deepEqual(nativeBridgeContracts.AndroidAiBridge, ['health', 'generateMemoir', 'cancelGeneration'])
 })
 
 test('mobile runtime manifests target the Qwen3.5 0.8B Q5 local model tier', () => {
@@ -130,7 +131,7 @@ test('mobile runtime manifests target the Qwen3.5 0.8B Q5 local model tier', () 
     assert.equal(mobileRuntimeManifests[platform].modelFileName, 'Qwen_Qwen3.5-0.8B-Q5_K_M.gguf')
     assert.equal(mobileRuntimeManifests[platform].modelSizeBytes, 625860768)
     assert.equal(mobileRuntimeManifests[platform].maxTokens, 768)
-    assert.equal(mobileRuntimeManifests[platform].deliveryMode, platform === 'android' ? 'play-asset-delivery' : 'deferred-ios-archive')
+    assert.equal(mobileRuntimeManifests[platform].deliveryMode, platform === 'android' ? 'direct-apk-assets' : 'deferred-ios-archive')
   }
 })
 

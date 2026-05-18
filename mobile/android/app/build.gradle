@@ -3,6 +3,17 @@ apply plugin: 'com.android.application'
 android {
     namespace = "local.memoir.mobile"
     compileSdk = rootProject.ext.compileSdkVersion
+    signingConfigs {
+        release {
+            def storePath = System.getenv("MEMOIR_ANDROID_KEYSTORE")
+            if (storePath) {
+                storeFile file(storePath)
+                storePassword System.getenv("MEMOIR_ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("MEMOIR_ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("MEMOIR_ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
     defaultConfig {
         applicationId "local.memoir.mobile"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -16,13 +27,85 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    androidResources {
+        noCompress += ['gguf', 'ready']
+    }
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
+            if (System.getenv("MEMOIR_ANDROID_KEYSTORE")) {
+                signingConfig signingConfigs.release
+            }
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    sourceSets {
+        main {
+            assets.srcDirs += ["$buildDir/generated/memoir-model-assets"]
+        }
+    }
 }
+
+def memoirModelSourceDir = file("../../../desktop/resources/models")
+def memoirGeneratedAssetDir = file("$buildDir/generated/memoir-model-assets/memoir-models")
+def memoirModelFiles = [
+    "Qwen_Qwen3.5-0.8B-Q5_K_M.gguf",
+    "mmproj-Qwen_Qwen3.5-0.8B-f16.gguf"
+]
+def memoirLlamaCppCommit = "253ba110bcd372207ca7b0bb56f1ea10d60d53fd"
+def memoirLlamaCppDir = file("$buildDir/generated/llama.cpp")
+
+tasks.register("prepareMemoirModelAssets", Copy) {
+    from(memoirModelSourceDir) {
+        include memoirModelFiles
+    }
+    into memoirGeneratedAssetDir
+    doFirst {
+        if (!memoirModelFiles.every { new File(memoirModelSourceDir, it).isFile() }) {
+            throw new GradleException("Memoir Android APK requires Qwen model assets in desktop/resources/models. Run npm run prepare:desktop-model -- --tier qwen35-0.8b-q5 first.")
+        }
+    }
+}
+
+tasks.register("prepareMemoirLlamaCppSource") {
+    outputs.dir(memoirLlamaCppDir)
+    doLast {
+        if (memoirLlamaCppDir.exists() && !new File(memoirLlamaCppDir, ".git").exists()) {
+            delete memoirLlamaCppDir
+        }
+
+        if (!memoirLlamaCppDir.exists()) {
+            exec {
+                commandLine "git", "clone", "--filter=blob:none", "https://github.com/ggml-org/llama.cpp.git", memoirLlamaCppDir.absolutePath
+            }
+        }
+
+        exec {
+            workingDir memoirLlamaCppDir
+            commandLine "git", "remote", "remove", "origin"
+            ignoreExitValue true
+        }
+        exec {
+            workingDir memoirLlamaCppDir
+            commandLine "git", "remote", "add", "origin", "https://github.com/ggml-org/llama.cpp.git"
+        }
+        exec {
+            workingDir memoirLlamaCppDir
+            commandLine "git", "fetch", "--depth", "1", "origin", memoirLlamaCppCommit
+        }
+        exec {
+            workingDir memoirLlamaCppDir
+            commandLine "git", "checkout", "--detach", memoirLlamaCppCommit
+        }
+    }
+}
+
+preBuild.dependsOn("prepareMemoirModelAssets", "prepareMemoirLlamaCppSource")
 
 repositories {
     flatDir{

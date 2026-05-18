@@ -3,16 +3,17 @@ import { ArchiveIcon, BookIcon, MenuIcon, PlusIcon, SparkleIcon } from './icons.
 import { StatusLine } from './StatusLine.tsx'
 
 type MemoirShellProps = {
-  view: 'archive' | 'compose' | 'editor'
+  view: 'archive' | 'compose' | 'reader' | 'editor'
   themeClass: string
   health: string
   stage: string
   onArchive: () => void
   onCreate: () => void
+  onStory: () => void
   children: ReactNode
 }
 
-export function MemoirShell({ view, themeClass, health, stage, onArchive, onCreate, children }: MemoirShellProps) {
+export function MemoirShell({ view, themeClass, health, stage, onArchive, onCreate, onStory, children }: MemoirShellProps) {
   return (
     <main className={`app view-${view} ${themeClass}`}>
       <header className="topbar">
@@ -41,7 +42,7 @@ export function MemoirShell({ view, themeClass, health, stage, onArchive, onCrea
           <SparkleIcon />
           <span>Create</span>
         </button>
-        <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-current={view === 'editor' ? 'page' : undefined}>
+        <button type="button" onClick={onStory} aria-current={view === 'reader' || view === 'editor' ? 'page' : undefined}>
           <BookIcon />
           <span>Story</span>
         </button>

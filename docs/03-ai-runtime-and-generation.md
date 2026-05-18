@@ -106,7 +106,7 @@ The live prompt and fallback rewrite path both use those labels, but the result 
 - No voice note or transcript input.
 - No layout planning stage.
 - No provenance history beyond the last returned diagnostics object.
-- No validated multimodal mobile runtime; `mobile/runtime-manifest.json` pins the intended Qwen3.5 0.8B Q5 local tier for future Android and iOS native runtime work.
+- Android now builds a pinned llama.cpp JNI runtime for CPU-only text drafting from ordered asset ids, tone, notes, and music cue. Native projector-backed image embedding is not connected yet; iOS native runtime work remains deferred until Mac/Xcode access.
 - Only the first 5 selected photos receive live image analysis today; later photos participate through sequence order, notes, and the compact story map.
 
 ## Honest Framing

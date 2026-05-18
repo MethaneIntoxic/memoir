@@ -17,7 +17,7 @@ export const composeGenerationStages = [
 ] as const
 
 export type ComposeGenerationStatus = 'idle' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'
-export type ComposeGenerationMode = 'jobs' | 'legacy-direct'
+export type ComposeGenerationMode = 'jobs' | 'legacy-direct' | 'android-native'
 
 export type ComposeGenerationProgress = {
   mode: ComposeGenerationMode
@@ -39,6 +39,13 @@ export type StartComposeGenerationInput = {
   fetchImpl?: typeof fetch
   wait?: (delayMs: number, signal?: AbortSignal) => Promise<void>
   pollIntervalMs?: number
+  androidAiBridge?: AndroidAiBridge
+}
+
+type AndroidAiBridge = {
+  health(): Promise<unknown>
+  generateMemoir(payload: unknown): Promise<unknown>
+  cancelGeneration(jobId: string): Promise<unknown>
 }
 
 type ComposeRequestBody = {
@@ -105,6 +112,12 @@ function clampProgress(value: number | null, fallback: number): number {
 }
 
 function describeStage(stage: string, status: ComposeGenerationStatus, mode: ComposeGenerationMode): string {
+  if (mode === 'android-native') {
+    if (stage === 'android-native') {
+      return 'Drafting on the Android local AI runtime'
+    }
+  }
+
   if (mode === 'legacy-direct') {
     if (stage === 'legacy-direct') {
       return 'Requesting a draft from the legacy direct endpoint'
@@ -128,6 +141,77 @@ function describeStage(stage: string, status: ComposeGenerationStatus, mode: Com
   }
 
   return jobStageLabels[stage] || `Running ${stage.replaceAll('-', ' ')}`
+}
+
+function getAndroidAiBridge(input: StartComposeGenerationInput): AndroidAiBridge | null {
+  if (input.androidAiBridge) {
+    return input.androidAiBridge
+  }
+
+  if (typeof window !== 'undefined' && window.memoirAndroidAi) {
+    return window.memoirAndroidAi
+  }
+
+  return null
+}
+
+function readAndroidHealth(value: unknown): { available: boolean; reason: string } {
+  if (!isRecord(value)) {
+    return { available: false, reason: 'android-ai-health-invalid' }
+  }
+
+  return {
+    available: value.available === true,
+    reason: readString(value.reason) || 'android-ai-runtime-unavailable',
+  }
+}
+
+async function generateViaAndroidBridge(input: StartComposeGenerationInput, bridge: AndroidAiBridge): Promise<GenerateMemoirPayload> {
+  const jobId = `android-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  const health = readAndroidHealth(await bridge.health())
+
+  if (!health.available) {
+    throw new Error(health.reason)
+  }
+
+  emitProgress(input.onProgress, {
+    mode: 'android-native',
+    jobId,
+    status: 'running',
+    stage: 'android-native',
+    progressPct: 20,
+    label: describeStage('android-native', 'running', 'android-native'),
+  })
+
+  const abortHandler = () => {
+    void bridge.cancelGeneration(jobId).catch(() => null)
+  }
+  input.signal?.addEventListener('abort', abortHandler, { once: true })
+
+  try {
+    const payload = parseGenerateMemoirPayload(
+      await bridge.generateMemoir({
+        ...buildComposeRequestBody(input),
+        jobId,
+      }),
+    )
+    if (!payload) {
+      throw new Error('Android local AI returned an invalid memoir draft')
+    }
+
+    emitProgress(input.onProgress, {
+      mode: 'android-native',
+      jobId,
+      status: 'completed',
+      stage: 'completed',
+      progressPct: 100,
+      label: describeStage('completed', 'completed', 'android-native'),
+    })
+
+    return payload
+  } finally {
+    input.signal?.removeEventListener('abort', abortHandler)
+  }
 }
 
 function emitProgress(
@@ -329,6 +413,11 @@ export function getComposeStageState(progress: ComposeGenerationProgress, stageK
 }
 
 export async function startComposeGeneration(input: StartComposeGenerationInput): Promise<GenerateMemoirPayload> {
+  const androidBridge = getAndroidAiBridge(input)
+  if (androidBridge) {
+    return generateViaAndroidBridge(input, androidBridge)
+  }
+
   const fetchImpl = input.fetchImpl || fetch
   const wait = input.wait || defaultWait
   const pollIntervalMs = input.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS

@@ -15,7 +15,7 @@
       "contextSize": 8192,
       "maxTokens": 768,
       "minimumMemoryClass": "8gb-ram",
-      "deliveryMode": "play-asset-delivery"
+      "deliveryMode": "direct-apk-assets"
     },
     "ios": {
       "modelId": "qwen3.5-0.8b-q5_K_M",

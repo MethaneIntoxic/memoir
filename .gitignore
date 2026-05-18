@@ -17,3 +17,5 @@ output/
 # Large binary assets - never commit
 desktop/resources/llama/
 desktop/resources/models/
+mobile/android/app/build/
+mobile/android/app/src/main/assets/memoir-models/

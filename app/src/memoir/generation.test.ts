@@ -141,3 +141,31 @@ test('startComposeGeneration cancels a server job when polling is aborted', asyn
     'POST http://localhost:8787/api/generation-jobs/job-1/cancel',
   ])
 })
+
+test('startComposeGeneration uses the Android native bridge when available', async () => {
+  const calls: unknown[] = []
+  const payload = createSampleGeneratePayload()
+
+  const result = await startComposeGeneration({
+    apiBase: '/api',
+    assets: createSampleAssets(),
+    tone: 'romantic',
+    notes: 'bridge note',
+    musicCue: 'bridge cue',
+    androidAiBridge: {
+      health: async () => ({ available: true }),
+      generateMemoir: async (request) => {
+        calls.push(request)
+        return payload
+      },
+      cancelGeneration: async () => ({ cancelled: true }),
+    },
+    fetchImpl: async () => {
+      throw new Error('fetch should not be used')
+    },
+  })
+
+  assert.equal(result.title, payload.title)
+  assert.equal(calls.length, 1)
+  assert.equal((calls[0] as { tone: string }).tone, 'romantic')
+})

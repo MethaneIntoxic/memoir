@@ -6,7 +6,6 @@
 - [ ] `npm --prefix app run test`
 - [ ] `npm run build`
 - [ ] `npm run lint`
-- [ ] `npm run package:web`
 - [ ] `npm run release:readiness`
 - [ ] Verify `.memoir` import/export round trip.
 - [ ] Verify diagnostics contain no raw image data.
@@ -31,11 +30,14 @@
 ## Android
 
 - [ ] Install mobile dependencies in `mobile/`.
+- [ ] Use JDK 21 with Android SDK platform 36, build-tools 36, CMake, and NDK.
 - [ ] `npm run cap:add:android`
 - [ ] `npm run cap:sync`
-- [ ] Build signed release `.aab` in Android Studio/Gradle.
-- [ ] Verify Play Asset Delivery strategy for model assets from `mobile/runtime-manifest.json`.
-- [ ] Run internal testing install from Play Console.
+- [ ] `npm --prefix mobile run build:android:apk`
+- [ ] Verify Qwen model assets are copied from `desktop/resources/models` into generated Android APK assets.
+- [ ] Sign the release APK with `MEMOIR_ANDROID_KEYSTORE`, `MEMOIR_ANDROID_KEYSTORE_PASSWORD`, `MEMOIR_ANDROID_KEY_ALIAS`, and `MEMOIR_ANDROID_KEY_PASSWORD`.
+- [ ] Verify `mobile/android/app/build/outputs/apk/release/app-release.apk` with `apksigner verify --verbose`.
+- [ ] Install the APK on a clean Android device or emulator and confirm the native AI bridge health result.
 
 ## iOS
 

@@ -23,15 +23,14 @@ The archive is intended for app-to-app transfer, backup, and future hosted impor
 
 ## Release Artifacts
 
-- Web: `dist/web/memoir-web.zip` from `npm run package:web`.
 - Windows: `npm run dist:desktop:single-file` for the primary one-file portable EXE.
 - Windows diagnostic: `npm run dist:desktop` for a ZIP plus `win-unpacked` staging target.
 - Windows single-file model tier: Qwen3.5 0.8B Q5_K_M plus the f16 mmproj is the default portable payload. The 2.5 GB hard shipping gate applies to the portable EXE; Qwen3-VL tiers remain optional larger fallback builds.
-- Android: signed `.aab` from the Capacitor Android project.
+- Android: signed direct-install `.apk` from the Capacitor Android project, with Qwen model assets copied from local desktop model resources at build time.
 - iOS: source/config stay ready for Capacitor, but final Xcode archive is deferred until macOS/Xcode access exists; `.ipa` is only for ad hoc/internal distribution.
 
 ## Store Policy Notes
 
 - iOS must not download executable code that changes app functionality after review.
-- Android store upload uses an `.aab`; Google Play generates optimized APKs.
-- Mobile model assets use `mobile/runtime-manifest.json`; Android is planned for Play Asset Delivery and iOS archive work is deferred.
+- Android v1 uses a direct sideload `.apk`; users may need to allow installs from outside the Play Store.
+- Mobile model assets use `mobile/runtime-manifest.json`; Android direct APK builds use generated APK assets and iOS archive work is deferred.
