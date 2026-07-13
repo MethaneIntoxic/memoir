@@ -79,6 +79,8 @@ On Android and iOS, missing or unavailable native AI is a visible error. Mobile 
 - JNI calls a CPU-only shared `llama.cpp` engine on a single inference executor.
 - Bundled ML Kit image labeling creates bounded photo context without a network model download; raw staging files and labels are cleared on completion, cancellation, load, and destruction.
 - The direct-install APK contains the pinned model. Unused projector assets are excluded until multimodal inference is implemented.
+- Generated model assets are synchronized as an exact one-file allowlist so stale build outputs cannot re-enter the APK.
+- The JNI library links one consistent static Android libc++ runtime; the APK must not depend on or package `libc++_shared.so`.
 - App backup is disabled or explicitly excludes WebView memoir data, model files, and media.
 - FileProvider exposes only an app-private `exports/` directory.
 - Debug builds are the development install target. Release artifacts require signing credentials and signature verification.

@@ -80,11 +80,16 @@ def memoirModelFiles = [
 def memoirLlamaCppCommit = "253ba110bcd372207ca7b0bb56f1ea10d60d53fd"
 def memoirLlamaCppDir = file("$buildDir/generated/llama.cpp")
 
-tasks.register("prepareMemoirModelAssets", Copy) {
+tasks.register("prepareMemoirModelAssets", Sync) {
     from(memoirModelSourceDir) {
         include memoirModelFiles
     }
     into memoirGeneratedAssetDir
+    outputs.upToDateWhen {
+        def packagedFiles = fileTree(memoirGeneratedAssetDir).files.findAll { it.isFile() }
+        packagedFiles.size() == memoirModelFiles.size()
+            && memoirModelFiles.every { new File(memoirGeneratedAssetDir, it).isFile() }
+    }
     doFirst {
         if (!memoirModelFiles.every { new File(memoirModelSourceDir, it).isFile() }) {
             throw new GradleException("Memoir Android APK requires the pinned Qwen model. Run npm --prefix mobile run prepare:model first.")

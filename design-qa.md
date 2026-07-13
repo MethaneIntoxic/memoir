@@ -36,9 +36,23 @@ A separate crop was not necessary because the 980 x 940 combined comparison keep
 ## Settings and share/export audit
 
 - Source visual truth: `wireframes/settings_profile/screen.png` and `wireframes/share_export/screen.png`
-- Implementations: `output/flow-audit/08-settings-mobile.png` and `output/flow-audit/09-share-export-mobile.png`
-- Additional states: `output/flow-audit/10-share-export-error-mobile.png`, `output/flow-audit/11-clear-confirmation-mobile.png`, `output/flow-audit/12-settings-desktop.png`, and `output/flow-audit/13-editor-desktop.png`
-- Viewports and state: 390 x 844 and 1440 x 900 with a locally seeded three-chapter memoir
+- Fresh implementations: `output/playwright/memoir-final/settings-mobile-selected-top-390x844.png`, `output/playwright/memoir-final/settings-mobile-selected-bottom-390x844.png`, and `output/playwright/memoir-final/share-export-mobile-390x844.png`
+- Combined comparison: `output/playwright/memoir-final/settings-share-comparison-final.png`
+- Focused comparisons: `output/playwright/memoir-final/settings-comparison-focused.png` and `output/playwright/memoir-final/share-export-comparison-focused.png`
+- Desktop responsive proof: `output/playwright/memoir-final/settings-desktop-1440x900.png` and `output/playwright/memoir-final/settings-desktop-bottom-1440x900.png`
+- Viewports and state: 390 x 844 and 1440 x 900 with a locally seeded selected memoir titled `Summer in Kyoto`
+
+### Fresh comparison evidence
+
+- Full view: the combined board places both source wireframes beside the fresh implementation captures in one browser-rendered comparison. The settings implementation preserves the editorial header, centered profile treatment, serif hierarchy, boxed rows, thin rules, restrained green/ink palette, hard-offset shadows, destructive footer action, and four-destination navigation. Account, notification, film-grain, and sign-out rows are intentionally replaced by local-AI health, privacy, archive count, export, diagnostics, and local clearing because Memoir has no account or cloud service.
+- Focused settings regions: separate top and bottom 390 x 844 captures keep profile, device health, privacy, theme, archive, export, diagnostics, destructive action, and navigation readable without relying on Playwright's fixed-navigation full-page stitching.
+- Focused share region: the source and implementation modal remain aligned on title hierarchy, close control, descriptive copy, four large export rows, icon/action rhythm, primary dark final action, border, and offset shadow. Web-link, Pinterest, and physical-print concepts are intentionally implemented as real offline HTML, portable `.memoir`, and 4:5 slide exports.
+- Typography: the implementation keeps the source's italic serif wordmark and display hierarchy, with compact uppercase labels and legible sans-serif controls. Wrapping remains clean at both tested widths.
+- Spacing and layout: mobile rows retain practical touch targets and consistent vertical rhythm; desktop content stays centered and navigation remains in normal document flow without covering archive actions.
+- Colors and tokens: paper, ink, pale archive green, muted status green, and pale destructive red map consistently to the wireframes. Contrast and focus states remain visible.
+- Image and icon quality: the implementation uses the app's real icon library and existing profile treatment; no target imagery is replaced by CSS art, emoji, or placeholder glyphs. The generic private-profile illustration is intentional because the product stores no account identity.
+- Copy and content: all visible copy describes implemented local behavior. No cloud sharing, notifications, account editing, sign-out, Pinterest, or physical ordering is falsely advertised.
+- Browser verification: settings navigation, archive selection, share open/close, Escape dismissal, clear-confirmation open/Escape cancellation, selected navigation state, 390 x 844 scrolling, and 1440 x 900 responsive layout were exercised. The application console reported 0 errors and 0 warnings; the comparison-only static page reported one irrelevant missing-favicon 404.
 
 ### Findings and repair history
 
@@ -61,6 +75,7 @@ A separate crop was not necessary because the 980 x 940 combined comparison keep
 - A cold reload produced no console warnings or errors.
 - Theme switching, share opening/closing, modal focus, Escape handling, and clear cancellation were exercised successfully.
 - The browser extension could not exercise the native photo picker because local-file access is disabled.
-- The browser security policy blocked creation of a new combined settings/share comparison canvas. Source and implementation captures were inspected individually, so this section is recorded as a comparison-evidence limitation rather than a pass.
+- Fresh source and implementation captures were rendered together in `output/playwright/memoir-final/settings-share-comparison-final.png`; focused settings and share comparisons were captured from that same board.
+- No actionable P0, P1, or P2 settings/share findings remain. The remaining native photo-picker and physical-device checks are platform validation gaps, not browser-visible design defects.
 
-final result: core archive/compose comparison passed; settings/share comparison evidence blocked by browser policy
+final result: passed

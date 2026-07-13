@@ -28,4 +28,5 @@ add_subdirectory("${LLAMA_CPP_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/llama.cpp")
 add_library(memoirllama SHARED memoirllama.cpp)
 
 target_include_directories(memoirllama PRIVATE "${LLAMA_CPP_DIR}/include")
-target_link_libraries(memoirllama llama android log)
+target_link_options(memoirllama PRIVATE -nostdlib++)
+target_link_libraries(memoirllama PRIVATE llama android log c++_static c++abi)
