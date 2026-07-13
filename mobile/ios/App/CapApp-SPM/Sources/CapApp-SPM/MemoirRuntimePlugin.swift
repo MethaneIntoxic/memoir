@@ -118,7 +118,7 @@ public class MemoirRuntimePlugin: CAPPlugin, CAPBridgedPlugin {
             guard let self else { return }
             do {
                 guard ProcessInfo.processInfo.physicalMemory >= minimumPhysicalMemoryBytes else {
-                    throw self.runtimeError("native-ai-unsupported-memory", code: 9)
+                    throw runtimeError("native-ai-unsupported-memory", code: 9)
                 }
                 let url = try self.requireModelURL()
                 try self.verifyModel(at: url)

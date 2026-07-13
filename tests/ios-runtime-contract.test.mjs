@@ -33,7 +33,8 @@ test('ios registers the platform-neutral runtime plugin with bounded local infer
   assert.match(plugin, /assets\.prefix\(maximumPhotoContextAssets\)/)
   assert.match(plugin, /defer \{ self\.clearStagedAssetState\(\) \}/)
   assert.match(plugin, /minimumPhysicalMemoryBytes: UInt64 = 7_000_000_000/)
-  assert.match(plugin, /native-ai-unsupported-memory/)
+  assert.match(plugin, /throw runtimeError\("native-ai-unsupported-memory"/)
+  assert.doesNotMatch(plugin, /self\.runtimeError/)
   assert.doesNotMatch(plugin, /"dataUrl": request\.dataUrl/)
 })
 

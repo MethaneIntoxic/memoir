@@ -12,7 +12,9 @@ private struct MemoirShareFileRequest: Codable {
 public final class MemoirFilesPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "MemoirFilesPlugin"
     public let jsName = "MemoirFiles"
-    public let pluginMethods = [CAPPluginMethod(name: "shareFile", returnType: CAPPluginReturnPromise)]
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "shareFile", returnType: CAPPluginReturnPromise)
+    ]
 
     private let maximumBase64Characters = 64 * 1024 * 1024
     private let maximumFileBytes = 48 * 1024 * 1024

@@ -42,6 +42,7 @@ test('ios native share protects temporary output and presents the system sheet',
 
   assert.match(bridge, /registerPluginInstance\(MemoirFilesPlugin\(\)\)/)
   assert.match(plugin, /public let jsName = "MemoirFiles"/)
+  assert.match(plugin, /public let pluginMethods: \[CAPPluginMethod\]/)
   assert.match(plugin, /maximumFileBytes = 48 \* 1024 \* 1024/)
   assert.match(plugin, /completeFileProtectionUntilFirstUserAuthentication/)
   assert.match(plugin, /isExcludedFromBackup = true/)
