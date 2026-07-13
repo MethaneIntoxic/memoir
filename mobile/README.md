@@ -10,14 +10,13 @@ From this folder:
 
 ```powershell
 npm install
-npm run build:web
-npm run cap:add:android
-npm run cap:add:ios
+npm run prepare:model
 npm run cap:sync
-npm run build:android:apk
+npm run bootstrap:android -- -AcceptAndroidSdkLicenses
+npm run build:android:debug
 ```
 
-Android builds require JDK 21 plus Android SDK platform 36, build-tools 36, CMake, and NDK. iOS builds require macOS with Xcode 26 or later for App Store uploads.
+Review the Google Android SDK licenses before passing `-AcceptAndroidSdkLicenses`. The bootstrap script installs a repository-local Microsoft JDK 21, Android SDK platform 36, build-tools 35.0.0, CMake 3.22.1, and NDK 27.0.12077973; it does not silently accept licenses. iOS builds require macOS with Xcode 26 or later for App Store uploads.
 
 ## Release Artifacts
 
@@ -27,8 +26,8 @@ Android builds require JDK 21 plus Android SDK platform 36, build-tools 36, CMak
 
 ## Runtime Rule
 
-Do not copy arbitrary desktop GGUF files into the mobile shell by default. Mobile model assets are pinned by `runtime-manifest.json`; the v1 offline target is `Qwen_Qwen3.5-0.8B-Q5_K_M.gguf` plus `mmproj-Qwen_Qwen3.5-0.8B-f16.gguf`.
+Do not copy arbitrary desktop GGUF files into the mobile shell. Mobile model assets are pinned by `runtime-manifest.json`; the v1 offline text-generation target is `Qwen_Qwen3.5-0.8B-Q5_K_M.gguf`.
 
-Android is the first build path and uses generated direct APK assets for the model payload. iOS source/config can be generated through Capacitor, but final archive and upload are deferred until macOS with Xcode 26 or later is available.
+Android stages the model from generated APK assets into private app storage with size and SHA-256 verification. iOS bundles the same pinned model as a protected app resource and links the official llama.cpp XCFramework through Swift Package Manager. Run `npm run cap:sync` before opening either native project; the sync script reapplies the pinned iOS runtime package definition.
 
-The Android bridge builds a pinned llama.cpp JNI runtime during Gradle `preBuild` and runs CPU-only text generation on-device. It uses the ordered asset ids, tone, notes, and music cue for v1 drafting; projector-backed image embedding is packaged but not yet connected to native generation.
+Both native bridges run CPU-only text generation on-device and expose the same fail-closed `MemoirRuntime` contract. Before generation, the shared renderer sends the first five sanitized photos one at a time to `stageAsset`. Android's bundled ML Kit labeler and Apple's Vision classifier reduce each photo to bounded, non-identifying labels on-device; raw photo bytes are never included in the llama.cpp generation request and staged context is cleared after generation or cancellation. This is photo-aware text generation, not a claim that the text model directly consumes image embeddings.

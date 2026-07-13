@@ -120,11 +120,9 @@ export const mobileRuntimeManifests: Record<
     runtimeId: string
     quantization: string
     modelFileName: string
+    modelSource: string
     modelSha256: string
     modelSizeBytes: number
-    mmprojFileName: string
-    mmprojSha256: string
-    mmprojSizeBytes: number
     contextSize: number
     maxTokens: number
     minimumMemoryClass: string

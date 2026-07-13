@@ -7,7 +7,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        protectMemoirLocalData()
         return true
     }
 
@@ -19,6 +19,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationDidEnterBackground(_ application: UIApplication) {
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+        protectMemoirLocalData()
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {
@@ -44,6 +45,26 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Feel free to add additional processing here, but if you want the App API to support
         // tracking app url opens, make sure to keep this call
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
+    }
+
+    private func protectMemoirLocalData() {
+        let fileManager = FileManager.default
+        let directories = [
+            fileManager.urls(for: .libraryDirectory, in: .userDomainMask).first?.appendingPathComponent("WebKit", isDirectory: true),
+            fileManager.urls(for: .libraryDirectory, in: .userDomainMask).first?.appendingPathComponent("WebsiteData", isDirectory: true),
+            fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first,
+        ].compactMap { $0 }
+
+        for directory in directories where fileManager.fileExists(atPath: directory.path) {
+            var values = URLResourceValues()
+            values.isExcludedFromBackup = true
+            var mutableDirectory = directory
+            try? mutableDirectory.setResourceValues(values)
+            try? fileManager.setAttributes(
+                [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
+                ofItemAtPath: directory.path
+            )
+        }
     }
 
 }

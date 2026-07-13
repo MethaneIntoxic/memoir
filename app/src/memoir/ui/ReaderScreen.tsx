@@ -1,14 +1,13 @@
 import { buildMemoirSlides } from '../../../../packages/memoir-core/index.mjs'
 import type { Memoir } from '../types.ts'
-import { ArrowLeftIcon, DownloadIcon, EditIcon, ExportIcon, SaveIcon } from './icons.tsx'
+import { ArrowLeftIcon, DownloadIcon, EditIcon, SaveIcon } from './icons.tsx'
 
 type ReaderScreenProps = {
   draft: Memoir
   onArchive: () => void
   onEdit: () => void
   onSave: () => void
-  onExportHtml: () => void
-  onExportInstagram: () => void
+  onShare: () => void
 }
 
 export function ReaderScreen({
@@ -16,8 +15,7 @@ export function ReaderScreen({
   onArchive,
   onEdit,
   onSave,
-  onExportHtml,
-  onExportInstagram,
+  onShare,
 }: ReaderScreenProps) {
   const slides = buildMemoirSlides(draft)
 
@@ -59,17 +57,13 @@ export function ReaderScreen({
       </div>
 
       <div className="reader-actions">
-        <button type="button" className="primary-button" onClick={onExportInstagram}>
+        <button type="button" className="primary-button" onClick={onShare}>
           <DownloadIcon />
-          <span>Export 4:5 slides</span>
+          <span>Share &amp; export</span>
         </button>
         <button type="button" className="soft-button" onClick={onSave}>
           <SaveIcon />
           <span>Save</span>
-        </button>
-        <button type="button" className="soft-button" onClick={onExportHtml}>
-          <ExportIcon />
-          <span>Web memoir</span>
         </button>
       </div>
     </section>

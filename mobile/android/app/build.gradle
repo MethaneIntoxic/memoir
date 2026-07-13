@@ -3,6 +3,7 @@ apply plugin: 'com.android.application'
 android {
     namespace = "local.memoir.mobile"
     compileSdk = rootProject.ext.compileSdkVersion
+    ndkVersion "27.0.12077973"
     signingConfigs {
         release {
             def storePath = System.getenv("MEMOIR_ANDROID_KEYSTORE")
@@ -21,6 +22,9 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters "arm64-v8a"
+        }
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
@@ -33,6 +37,7 @@ android {
     externalNativeBuild {
         cmake {
             path "src/main/cpp/CMakeLists.txt"
+            version "3.22.1"
         }
     }
     buildTypes {
@@ -54,8 +59,7 @@ android {
 def memoirModelSourceDir = file("../../../desktop/resources/models")
 def memoirGeneratedAssetDir = file("$buildDir/generated/memoir-model-assets/memoir-models")
 def memoirModelFiles = [
-    "Qwen_Qwen3.5-0.8B-Q5_K_M.gguf",
-    "mmproj-Qwen_Qwen3.5-0.8B-f16.gguf"
+    "Qwen_Qwen3.5-0.8B-Q5_K_M.gguf"
 ]
 def memoirLlamaCppCommit = "253ba110bcd372207ca7b0bb56f1ea10d60d53fd"
 def memoirLlamaCppDir = file("$buildDir/generated/llama.cpp")
@@ -67,7 +71,7 @@ tasks.register("prepareMemoirModelAssets", Copy) {
     into memoirGeneratedAssetDir
     doFirst {
         if (!memoirModelFiles.every { new File(memoirModelSourceDir, it).isFile() }) {
-            throw new GradleException("Memoir Android APK requires Qwen model assets in desktop/resources/models. Run npm run prepare:desktop-model -- --tier qwen35-0.8b-q5 first.")
+            throw new GradleException("Memoir Android APK requires the pinned Qwen model. Run npm --prefix mobile run prepare:model first.")
         }
     }
 }
@@ -75,6 +79,16 @@ tasks.register("prepareMemoirModelAssets", Copy) {
 tasks.register("prepareMemoirLlamaCppSource") {
     outputs.dir(memoirLlamaCppDir)
     doLast {
+        if (memoirLlamaCppDir.exists() && new File(memoirLlamaCppDir, ".git").exists()) {
+            def currentCommit = providers.exec {
+                workingDir memoirLlamaCppDir
+                commandLine "git", "rev-parse", "HEAD"
+            }.standardOutput.asText.get().trim()
+            if (currentCommit == memoirLlamaCppCommit) {
+                return
+            }
+        }
+
         if (memoirLlamaCppDir.exists() && !new File(memoirLlamaCppDir, ".git").exists()) {
             delete memoirLlamaCppDir
         }
@@ -107,6 +121,25 @@ tasks.register("prepareMemoirLlamaCppSource") {
 
 preBuild.dependsOn("prepareMemoirModelAssets", "prepareMemoirLlamaCppSource")
 
+tasks.register("verifyMemoirReleaseSigning") {
+    doLast {
+        def required = [
+            "MEMOIR_ANDROID_KEYSTORE",
+            "MEMOIR_ANDROID_KEYSTORE_PASSWORD",
+            "MEMOIR_ANDROID_KEY_ALIAS",
+            "MEMOIR_ANDROID_KEY_PASSWORD"
+        ]
+        def missing = required.findAll { !System.getenv(it) }
+        if (!missing.isEmpty()) {
+            throw new GradleException("Memoir release signing is not configured. Missing: ${missing.join(', ')}. Use assembleDebug for development installs.")
+        }
+    }
+}
+
+tasks.matching { it.name == "assembleRelease" }.configureEach {
+    dependsOn("verifyMemoirReleaseSigning")
+}
+
 repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
@@ -119,6 +152,7 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
+    implementation "com.google.mlkit:image-labeling:17.0.9"
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"

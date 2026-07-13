@@ -1,5 +1,11 @@
 import type { Asset, GenerateMemoirPayload, Tone } from './types.ts'
+import { MAX_VISION_ASSETS } from './assets.ts'
 import { parseGenerateMemoirPayload } from './validation.ts'
+import {
+  getNativeRuntimeBridge,
+  isNativeRuntimePlatform,
+  type NativeRuntimeBridge,
+} from '../platform/runtime-adapter.ts'
 
 const DEFAULT_POLL_INTERVAL_MS = 1200
 
@@ -17,7 +23,7 @@ export const composeGenerationStages = [
 ] as const
 
 export type ComposeGenerationStatus = 'idle' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'
-export type ComposeGenerationMode = 'jobs' | 'legacy-direct' | 'android-native'
+export type ComposeGenerationMode = 'jobs' | 'legacy-direct' | 'native'
 
 export type ComposeGenerationProgress = {
   mode: ComposeGenerationMode
@@ -39,13 +45,7 @@ export type StartComposeGenerationInput = {
   fetchImpl?: typeof fetch
   wait?: (delayMs: number, signal?: AbortSignal) => Promise<void>
   pollIntervalMs?: number
-  androidAiBridge?: AndroidAiBridge
-}
-
-type AndroidAiBridge = {
-  health(): Promise<unknown>
-  generateMemoir(payload: unknown): Promise<unknown>
-  cancelGeneration(jobId: string): Promise<unknown>
+  nativeRuntimeBridge?: NativeRuntimeBridge
 }
 
 type ComposeRequestBody = {
@@ -112,9 +112,13 @@ function clampProgress(value: number | null, fallback: number): number {
 }
 
 function describeStage(stage: string, status: ComposeGenerationStatus, mode: ComposeGenerationMode): string {
-  if (mode === 'android-native') {
-    if (stage === 'android-native') {
-      return 'Drafting on the Android local AI runtime'
+  if (mode === 'native') {
+    if (stage === 'asset-analysis') {
+      return 'Analyzing selected photos on this device'
+    }
+
+    if (stage === 'memoir-draft') {
+      return 'Drafting on this device'
     }
   }
 
@@ -143,16 +147,8 @@ function describeStage(stage: string, status: ComposeGenerationStatus, mode: Com
   return jobStageLabels[stage] || `Running ${stage.replaceAll('-', ' ')}`
 }
 
-function getAndroidAiBridge(input: StartComposeGenerationInput): AndroidAiBridge | null {
-  if (input.androidAiBridge) {
-    return input.androidAiBridge
-  }
-
-  if (typeof window !== 'undefined' && window.memoirAndroidAi) {
-    return window.memoirAndroidAi
-  }
-
-  return null
+function resolveNativeRuntimeBridge(input: StartComposeGenerationInput): NativeRuntimeBridge | null {
+  return input.nativeRuntimeBridge || getNativeRuntimeBridge()
 }
 
 function readAndroidHealth(value: unknown): { available: boolean; reason: string } {
@@ -166,51 +162,86 @@ function readAndroidHealth(value: unknown): { available: boolean; reason: string
   }
 }
 
-async function generateViaAndroidBridge(input: StartComposeGenerationInput, bridge: AndroidAiBridge): Promise<GenerateMemoirPayload> {
-  const jobId = `android-${Date.now()}-${Math.random().toString(16).slice(2)}`
-  const health = readAndroidHealth(await bridge.health())
+async function generateViaNativeBridge(input: StartComposeGenerationInput, bridge: NativeRuntimeBridge): Promise<GenerateMemoirPayload> {
+  const jobId = `native-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  let health = readAndroidHealth(await bridge.health())
+
+  if (!health.available) {
+    health = readAndroidHealth(await bridge.prepare())
+  }
 
   if (!health.available) {
     throw new Error(health.reason)
   }
 
-  emitProgress(input.onProgress, {
-    mode: 'android-native',
-    jobId,
-    status: 'running',
-    stage: 'android-native',
-    progressPct: 20,
-    label: describeStage('android-native', 'running', 'android-native'),
-  })
-
   const abortHandler = () => {
-    void bridge.cancelGeneration(jobId).catch(() => null)
+    void bridge.cancelGeneration({ jobId }).catch(() => null)
+    void bridge.clearStagedAssets().catch(() => null)
   }
   input.signal?.addEventListener('abort', abortHandler, { once: true })
 
   try {
-    const payload = parseGenerateMemoirPayload(
-      await bridge.generateMemoir({
-        ...buildComposeRequestBody(input),
+    await bridge.clearStagedAssets()
+    const visionAssets = input.assets.slice(0, MAX_VISION_ASSETS)
+    for (const [index, asset] of visionAssets.entries()) {
+      if (input.signal?.aborted) {
+        throw input.signal.reason instanceof Error
+          ? input.signal.reason
+          : new DOMException('Aborted', 'AbortError')
+      }
+
+      emitProgress(input.onProgress, {
+        mode: 'native',
         jobId,
-      }),
-    )
-    if (!payload) {
-      throw new Error('Android local AI returned an invalid memoir draft')
+        status: 'running',
+        stage: 'asset-analysis',
+        progressPct: 12 + Math.round((index / Math.max(1, visionAssets.length)) * 38),
+        label: describeStage('asset-analysis', 'running', 'native'),
+      })
+      await bridge.stageAsset({ assetId: asset.id, dataUrl: asset.dataUrl })
     }
 
     emitProgress(input.onProgress, {
-      mode: 'android-native',
+      mode: 'native',
+      jobId,
+      status: 'running',
+      stage: 'memoir-draft',
+      progressPct: 55,
+      label: describeStage('memoir-draft', 'running', 'native'),
+    })
+
+    const payload = parseGenerateMemoirPayload(
+      await bridge.generateMemoir({
+        jobId,
+        assets: input.assets.map((asset) => ({ id: asset.id })),
+        tone: input.tone,
+        notes: input.notes,
+        musicCue: input.musicCue,
+      }),
+    )
+    if (!payload) {
+      throw new Error('On-device AI returned an invalid memoir draft')
+    }
+    const expectedAssetIds = input.assets.map((asset) => asset.id)
+    const preservesAssetOrder = payload.sections.length === expectedAssetIds.length
+      && payload.sections.every((section, index) => section.assetId === expectedAssetIds[index])
+    if (!preservesAssetOrder) {
+      throw new Error('On-device AI returned sections for the wrong photos')
+    }
+
+    emitProgress(input.onProgress, {
+      mode: 'native',
       jobId,
       status: 'completed',
       stage: 'completed',
       progressPct: 100,
-      label: describeStage('completed', 'completed', 'android-native'),
+      label: describeStage('completed', 'completed', 'native'),
     })
 
     return payload
   } finally {
     input.signal?.removeEventListener('abort', abortHandler)
+    await bridge.clearStagedAssets().catch(() => null)
   }
 }
 
@@ -413,9 +444,13 @@ export function getComposeStageState(progress: ComposeGenerationProgress, stageK
 }
 
 export async function startComposeGeneration(input: StartComposeGenerationInput): Promise<GenerateMemoirPayload> {
-  const androidBridge = getAndroidAiBridge(input)
-  if (androidBridge) {
-    return generateViaAndroidBridge(input, androidBridge)
+  const nativeBridge = resolveNativeRuntimeBridge(input)
+  if (nativeBridge) {
+    return generateViaNativeBridge(input, nativeBridge)
+  }
+
+  if (isNativeRuntimePlatform()) {
+    throw new Error('native-ai-plugin-unavailable')
   }
 
   const fetchImpl = input.fetchImpl || fetch

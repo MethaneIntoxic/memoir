@@ -11,6 +11,8 @@
     "test": "node --test src/memoir/assets.test.ts src/memoir/document.test.ts src/memoir/export.test.ts src/memoir/generation.test.ts src/memoir/validation.test.ts"
   },
   "dependencies": {
+    "@capacitor/core": "^8.3.3",
+    "@phosphor-icons/react": "2.1.10",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
   },

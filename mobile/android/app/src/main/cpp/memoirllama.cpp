@@ -16,6 +16,7 @@ constexpr const char * LOG_TAG = "MemoirLlama";
 constexpr int DEFAULT_CONTEXT_TOKENS = 2048;
 
 std::mutex g_mutex;
+std::mutex g_cancel_mutex;
 std::string g_model_path;
 llama_model * g_model = nullptr;
 bool g_backends_loaded = false;
@@ -52,7 +53,17 @@ bool is_cancelled(const std::string & job_id) {
         return false;
     }
 
+    std::lock_guard<std::mutex> lock(g_cancel_mutex);
     return g_cancelled_jobs.find(job_id) != g_cancelled_jobs.end();
+}
+
+void clear_cancelled(const std::string & job_id) {
+    if (job_id.empty()) {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(g_cancel_mutex);
+    g_cancelled_jobs.erase(job_id);
 }
 
 bool ensure_model_loaded(const std::string & model_path) {
@@ -213,17 +224,18 @@ std::string generate_text(const std::string & model_path, const std::string & pr
 
     llama_sampler_free(sampler);
     llama_free(ctx);
+    clear_cancelled(job_id);
     return output;
 }
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_local_memoir_mobile_MemoirAndroidAiPlugin_nativeRuntimeStatus(JNIEnv * env, jclass) {
+Java_local_memoir_mobile_MemoirRuntimePlugin_nativeRuntimeStatus(JNIEnv * env, jclass) {
     return string_to_jstring(env, "llama.cpp-android-jni-ready");
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_local_memoir_mobile_MemoirAndroidAiPlugin_nativeGenerate(
+Java_local_memoir_mobile_MemoirRuntimePlugin_nativeGenerate(
     JNIEnv * env,
     jclass,
     jstring model_path,
@@ -231,22 +243,27 @@ Java_local_memoir_mobile_MemoirAndroidAiPlugin_nativeGenerate(
     jstring job_id,
     jint max_tokens
 ) {
+    const std::string job_id_value = jstring_to_string(env, job_id);
     try {
         const std::string result = generate_text(
             jstring_to_string(env, model_path),
             jstring_to_string(env, prompt),
-            jstring_to_string(env, job_id),
+            job_id_value,
             static_cast<int>(max_tokens)
         );
         return string_to_jstring(env, result);
     } catch (const std::exception & error) {
+        clear_cancelled(job_id_value);
         set_error(env, error.what());
         return nullptr;
     }
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_local_memoir_mobile_MemoirAndroidAiPlugin_nativeCancel(JNIEnv * env, jclass, jstring job_id) {
-    std::lock_guard<std::mutex> lock(g_mutex);
+Java_local_memoir_mobile_MemoirRuntimePlugin_nativeCancel(JNIEnv * env, jclass, jstring job_id) {
+    std::lock_guard<std::mutex> lock(g_cancel_mutex);
+    if (g_cancelled_jobs.size() >= 1024) {
+        g_cancelled_jobs.clear();
+    }
     g_cancelled_jobs.insert(jstring_to_string(env, job_id));
 }

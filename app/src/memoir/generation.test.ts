@@ -142,8 +142,10 @@ test('startComposeGeneration cancels a server job when polling is aborted', asyn
   ])
 })
 
-test('startComposeGeneration uses the Android native bridge when available', async () => {
-  const calls: unknown[] = []
+test('startComposeGeneration stages bounded photo context and keeps base64 out of the generation request', async () => {
+  const generateCalls: unknown[] = []
+  const stagedAssets: unknown[] = []
+  let clearCount = 0
   const payload = createSampleGeneratePayload()
 
   const result = await startComposeGeneration({
@@ -152,12 +154,22 @@ test('startComposeGeneration uses the Android native bridge when available', asy
     tone: 'romantic',
     notes: 'bridge note',
     musicCue: 'bridge cue',
-    androidAiBridge: {
+    nativeRuntimeBridge: {
       health: async () => ({ available: true }),
+      prepare: async () => ({ available: true }),
+      stageAsset: async (request) => {
+        stagedAssets.push(request)
+        return { staged: true }
+      },
+      clearStagedAssets: async () => {
+        clearCount += 1
+        return { cleared: true }
+      },
       generateMemoir: async (request) => {
-        calls.push(request)
+        generateCalls.push(request)
         return payload
       },
+      rewrite: async () => ({ text: 'rewritten' }),
       cancelGeneration: async () => ({ cancelled: true }),
     },
     fetchImpl: async () => {
@@ -166,6 +178,52 @@ test('startComposeGeneration uses the Android native bridge when available', asy
   })
 
   assert.equal(result.title, payload.title)
-  assert.equal(calls.length, 1)
-  assert.equal((calls[0] as { tone: string }).tone, 'romantic')
+  assert.equal(generateCalls.length, 1)
+  assert.equal((generateCalls[0] as { tone: string }).tone, 'romantic')
+  assert.deepEqual((generateCalls[0] as { assets: unknown[] }).assets, [
+    { id: 'asset-1' },
+    { id: 'asset-2' },
+    { id: 'asset-3' },
+  ])
+  assert.equal(JSON.stringify(generateCalls[0]).includes('data:image/'), false)
+  assert.deepEqual(stagedAssets, [
+    { assetId: 'asset-1', dataUrl: 'data:image/jpeg;base64,aaaa' },
+    { assetId: 'asset-2', dataUrl: 'data:image/jpeg;base64,bbbb' },
+    { assetId: 'asset-3', dataUrl: 'data:image/jpeg;base64,cccc' },
+  ])
+  assert.equal(clearCount, 2)
+})
+
+test('native generation rejects sections that do not preserve selected photo order', async () => {
+  const bridge = {
+    health: async () => ({ available: true }),
+    prepare: async () => ({ available: true }),
+    stageAsset: async () => ({ staged: true }),
+    clearStagedAssets: async () => ({ cleared: true }),
+    generateMemoir: async () => ({
+      title: 'Wrong order',
+      summary: 'Invalid native output',
+      quote: 'Nope',
+      sections: [
+        { id: 'section-2', assetId: 'asset-2', caption: 'Two', body: 'Two' },
+        { id: 'section-1', assetId: 'asset-1', caption: 'One', body: 'One' },
+        { id: 'section-3', assetId: 'asset-3', caption: 'Three', body: 'Three' },
+      ],
+    }),
+    rewrite: async () => ({ text: 'unused' }),
+    cancelGeneration: async () => ({ cancelled: true }),
+  }
+
+  await assert.rejects(
+    startComposeGeneration({
+      apiBase: '/api',
+      assets: createSampleAssets(),
+      tone: 'diary',
+      notes: '',
+      musicCue: '',
+      nativeRuntimeBridge: bridge,
+      fetchImpl: async () => new Response(null, { status: 500 }),
+    }),
+    /wrong photos/,
+  )
 })

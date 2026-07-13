@@ -29,11 +29,15 @@ import {
 import { clearArchiveStorage, readApiBase, readArchive, writeApiBase, writeArchive } from './memoir/storage.ts'
 import type { Asset, Memoir, Theme, Tone } from './memoir/types.ts'
 import { normalizeApiBase, parseRewriteText } from './memoir/validation.ts'
+import { readRuntimeHealth, rewriteWithRuntime, type RuntimeHealth } from './platform/runtime-adapter.ts'
 import { ArchiveScreen } from './memoir/ui/ArchiveScreen.tsx'
 import { ComposeScreen } from './memoir/ui/ComposeScreen.tsx'
 import { EditorScreen } from './memoir/ui/EditorScreen.tsx'
 import { MemoirShell } from './memoir/ui/MemoirShell.tsx'
 import { ReaderScreen } from './memoir/ui/ReaderScreen.tsx'
+import { SettingsScreen } from './memoir/ui/SettingsScreen.tsx'
+import { ShareExportDialog } from './memoir/ui/ShareExportDialog.tsx'
+import { ConfirmClearDialog } from './memoir/ui/ConfirmClearDialog.tsx'
 
 function createIdleGenerationProgress(): ComposeGenerationProgress {
   return {
@@ -46,11 +50,12 @@ function createIdleGenerationProgress(): ComposeGenerationProgress {
   }
 }
 
-function describeLocalAiHealth(payload: Record<string, unknown>): string {
-  const available = payload.available === true
-  const modelInstalled = payload.modelInstalled === true
-  const model = typeof payload.model === 'string' && payload.model.trim() ? payload.model : 'the configured model'
-  const runtime = typeof payload.runtime === 'string' ? payload.runtime : ''
+function describeLocalAiHealth(payload: RuntimeHealth): string {
+  const { available, modelInstalled, model, runtime, platform, phase } = payload
+
+  if (phase === 'copying' || phase === 'verifying' || phase === 'loading') {
+    return `Preparing ${model} on this device${payload.progressPct === undefined ? '' : ` (${payload.progressPct}%)`}`
+  }
 
   if (available && modelInstalled) {
     return `Local AI ready on ${model}`
@@ -68,8 +73,8 @@ function describeLocalAiHealth(payload: Record<string, unknown>): string {
     return 'Bundled local AI is unavailable, fallback drafting will be used'
   }
 
-  if (runtime === 'android-native-llama') {
-    return 'Android local AI is unavailable until the native runtime is bundled'
+  if (platform === 'android' || platform === 'ios') {
+    return `On-device AI is unavailable (${payload.reason || 'native runtime unavailable'}). Mobile will not send memoir data to a server.`
   }
 
   return 'Local AI server is unavailable, fallback drafting will be used'
@@ -93,7 +98,7 @@ function isDebugUiEnabled(): boolean {
 }
 
 function App() {
-  const [view, setView] = useState<'archive' | 'compose' | 'reader' | 'editor'>('archive')
+  const [view, setView] = useState<'archive' | 'compose' | 'reader' | 'editor' | 'settings'>('archive')
   const [memoirs, setMemoirs] = useState<Memoir[]>([])
   const [archiveReady, setArchiveReady] = useState(false)
   const [assets, setAssets] = useState<Asset[]>([])
@@ -108,6 +113,9 @@ function App() {
   const [stage, setStage] = useState('Idle')
   const [generationProgress, setGenerationProgress] = useState<ComposeGenerationProgress>(() => createIdleGenerationProgress())
   const [busySection, setBusySection] = useState('')
+  const [healthRefresh, setHealthRefresh] = useState(0)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [clearConfirmationOpen, setClearConfirmationOpen] = useState(false)
   const generationRunId = useRef(0)
   const generationAbort = useRef<AbortController | null>(null)
   const resolvedApiBase = useMemo(() => normalizeApiBase(apiBase), [apiBase])
@@ -155,30 +163,31 @@ function App() {
   useEffect(() => {
     let cancelled = false
 
-    const healthRequest = window.memoirAndroidAi?.health
-      ? window.memoirAndroidAi.health()
-      : fetch(`${resolvedApiBase}/health`).then((response) => response.json())
-
-    healthRequest
+    readRuntimeHealth(resolvedApiBase)
       .then((payload) => {
         if (!cancelled) {
-          setHealth(describeLocalAiHealth(payload as Record<string, unknown>))
+          setHealth(describeLocalAiHealth(payload))
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setHealth('Local AI server is unavailable, fallback drafting will be used')
+          setHealth('Local AI status check failed; no memoir data was sent')
         }
       })
 
     return () => {
       cancelled = true
     }
-  }, [resolvedApiBase])
+  }, [resolvedApiBase, healthRefresh])
 
   async function handleFiles(event: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files || []).slice(0, MAX_CLIENT_ASSETS)
+    const remainingSlots = MAX_CLIENT_ASSETS - assets.length
+    const files = Array.from(event.target.files || []).slice(0, Math.max(0, remainingSlots))
     event.target.value = ''
+    if (remainingSlots <= 0) {
+      setStage(`You can add up to ${MAX_CLIENT_ASSETS} photos`)
+      return
+    }
     if (!files.length) {
       return
     }
@@ -188,15 +197,47 @@ function App() {
 
     try {
       const nextAssets = await Promise.all(files.map((file) => sanitizeImage(file)))
-      setAssets(nextAssets)
+      setAssets((currentAssets) => [...currentAssets, ...nextAssets].slice(0, MAX_CLIENT_ASSETS))
+      const nextCount = Math.min(MAX_CLIENT_ASSETS, assets.length + nextAssets.length)
       setStage(
-        nextAssets.length > MAX_VISION_ASSETS
+        nextCount > MAX_VISION_ASSETS
           ? `Ready. First ${MAX_VISION_ASSETS} photos get live visual analysis.`
           : 'Ready to build the story',
       )
     } catch (error) {
       setStage(error instanceof Error ? error.message : 'Photo import failed')
     }
+  }
+
+  function removeAsset(assetId: string) {
+    if (isGenerating) {
+      return
+    }
+
+    setAssets((currentAssets) => currentAssets.filter((asset) => asset.id !== assetId))
+    setGenerationProgress(createIdleGenerationProgress())
+    setStage('Photo removed')
+  }
+
+  function moveAsset(assetId: string, direction: -1 | 1) {
+    if (isGenerating) {
+      return
+    }
+
+    setAssets((currentAssets) => {
+      const currentIndex = currentAssets.findIndex((asset) => asset.id === assetId)
+      const nextIndex = currentIndex + direction
+      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= currentAssets.length) {
+        return currentAssets
+      }
+
+      const reordered = [...currentAssets]
+      const [asset] = reordered.splice(currentIndex, 1)
+      reordered.splice(nextIndex, 0, asset)
+      return reordered
+    })
+    setGenerationProgress(createIdleGenerationProgress())
+    setStage('Photo order updated')
   }
 
   async function handleGenerate() {
@@ -356,6 +397,17 @@ function App() {
     }
   }
 
+  function requestClearArchive() {
+    if (memoirs.length > 0) {
+      setClearConfirmationOpen(true)
+    }
+  }
+
+  async function confirmClearArchive() {
+    setClearConfirmationOpen(false)
+    await clearArchive()
+  }
+
   async function handlePortableImport(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     event.target.value = ''
@@ -392,21 +444,11 @@ function App() {
 
     setBusySection(sectionId)
     try {
-      const response = await fetch(`${resolvedApiBase}/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mode: 'rewrite-block',
-          tone: draft.tone,
-          text: target[field],
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Section rewrite failed (${response.status})`)
-      }
-
-      const text = parseRewriteText(await response.json())
+      const text = parseRewriteText(await rewriteWithRuntime({
+        apiBase: resolvedApiBase,
+        tone: draft.tone,
+        text: target[field],
+      }))
       if (!text) {
         throw new Error('Section rewrite returned invalid text')
       }
@@ -423,17 +465,16 @@ function App() {
   }
 
   function updateDraftTheme(nextTheme: Theme) {
-    if (!draft) {
-      return
-    }
-
     setTheme(nextTheme)
-    setDraft(updateMemoir(draft, { theme: nextTheme }))
+    if (draft) {
+      setDraft(updateMemoir(draft, { theme: nextTheme }))
+    }
   }
 
   function exportHtml() {
     if (draft) {
       exportMemoirHtml(draft)
+      setStage('Web memoir exported')
     }
   }
 
@@ -454,13 +495,28 @@ function App() {
       setStage('Instagram slides exported')
     } catch (error) {
       setStage(error instanceof Error ? error.message : 'Instagram slide export failed')
+      throw error
     }
   }
 
   function printPdf() {
     if (draft) {
       openMemoirPrintPreview(draft)
+      setStage('Print preview opened')
     }
+  }
+
+  function openShareDialog() {
+    if (!draft) {
+      setStage('Open a memoir before exporting')
+      return
+    }
+    setShareOpen(true)
+  }
+
+  function refreshLocalAiHealth() {
+    setHealth('Checking local AI...')
+    setHealthRefresh((current) => current + 1)
   }
 
   function downloadDiagnostics() {
@@ -473,22 +529,25 @@ function App() {
   const themeClass = `theme-${draft?.theme || theme}`
 
   return (
-    <MemoirShell
-      view={view}
-      themeClass={themeClass}
-      health={health}
-      stage={stage}
-      onArchive={() => setView('archive')}
-      onCreate={startNewMemoir}
-      onStory={() => (draft ? setView('reader') : setView('archive'))}
-    >
+    <>
+      <MemoirShell
+        view={view}
+        themeClass={themeClass}
+        health={health}
+        stage={stage}
+        isModalOpen={shareOpen || clearConfirmationOpen}
+        onArchive={() => setView('archive')}
+        onCreate={startNewMemoir}
+        onStory={() => (draft ? setView('reader') : setView('archive'))}
+        onSettings={() => setView('settings')}
+      >
       {view === 'archive' ? (
         <ArchiveScreen
           archiveReady={archiveReady}
           memoirs={memoirs}
           onCreate={startNewMemoir}
           onOpen={openMemoir}
-          onClear={clearArchive}
+          onClear={requestClearArchive}
           onImport={handlePortableImport}
         />
       ) : null}
@@ -503,6 +562,8 @@ function App() {
           isGenerating={isGenerating}
           generationProgress={generationProgress}
           onFiles={handleFiles}
+          onRemoveAsset={removeAsset}
+          onMoveAsset={moveAsset}
           onToneChange={setTone}
           onNotesChange={setNotes}
           onMusicCueChange={setMusicCue}
@@ -527,9 +588,7 @@ function App() {
           onRewriteSection={rewriteSection}
           onMoveSection={moveSection}
           onSave={persistMemoir}
-          onExportHtml={exportHtml}
-          onExportPortable={exportPortable}
-          onPrintPdf={printPdf}
+          onShare={openShareDialog}
           onDiagnostics={downloadDiagnostics}
         />
       ) : null}
@@ -540,11 +599,45 @@ function App() {
           onArchive={() => setView('archive')}
           onEdit={() => setView('editor')}
           onSave={persistMemoir}
-          onExportHtml={exportHtml}
-          onExportInstagram={exportInstagram}
+          onShare={openShareDialog}
         />
       ) : null}
-    </MemoirShell>
+
+      {view === 'settings' ? (
+        <SettingsScreen
+          health={health}
+          memoirCount={memoirs.length}
+          theme={draft?.theme || theme}
+          hasDraft={draft !== null}
+          onRefreshHealth={refreshLocalAiHealth}
+          onThemeChange={updateDraftTheme}
+          onOpenExports={openShareDialog}
+          onExportDiagnostics={downloadDiagnostics}
+          onRequestClearArchive={requestClearArchive}
+        />
+      ) : null}
+
+      </MemoirShell>
+
+      {shareOpen && draft ? (
+        <ShareExportDialog
+          memoirTitle={draft.title}
+          onClose={() => setShareOpen(false)}
+          onPrintPdf={printPdf}
+          onExportHtml={exportHtml}
+          onExportPortable={exportPortable}
+          onExportSlides={exportInstagram}
+        />
+      ) : null}
+
+      {clearConfirmationOpen ? (
+        <ConfirmClearDialog
+          memoirCount={memoirs.length}
+          onCancel={() => setClearConfirmationOpen(false)}
+          onConfirm={() => void confirmClearArchive()}
+        />
+      ) : null}
+    </>
   )
 }
 

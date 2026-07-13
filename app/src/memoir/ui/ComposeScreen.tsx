@@ -6,7 +6,7 @@ import {
   type ComposeGenerationProgress,
 } from '../generation.ts'
 import type { Asset, Tone } from '../types.ts'
-import { CheckIcon, ImageIcon, MusicIcon, SparkleIcon, UploadIcon } from './icons.tsx'
+import { ArrowLeftIcon, CheckIcon, ImageIcon, MusicIcon, SparkleIcon, TrashIcon, UploadIcon } from './icons.tsx'
 
 const toneOptions: Array<{ value: Tone; label: string; hint: string }> = [
   { value: 'romantic', label: 'Romantic', hint: 'soft glow' },
@@ -24,6 +24,8 @@ type ComposeScreenProps = {
   isGenerating: boolean
   generationProgress: ComposeGenerationProgress
   onFiles: (event: ChangeEvent<HTMLInputElement>) => void
+  onRemoveAsset: (assetId: string) => void
+  onMoveAsset: (assetId: string, direction: -1 | 1) => void
   onToneChange: (tone: Tone) => void
   onNotesChange: (notes: string) => void
   onMusicCueChange: (musicCue: string) => void
@@ -32,15 +34,12 @@ type ComposeScreenProps = {
   onCancel: () => void
 }
 
-function PhotoStrip({ assets }: Pick<ComposeScreenProps, 'assets'>) {
+function PhotoStrip({ assets, isGenerating, onRemoveAsset, onMoveAsset }: Pick<ComposeScreenProps, 'assets' | 'isGenerating' | 'onRemoveAsset' | 'onMoveAsset'>) {
   if (!assets.length) {
     return (
       <div className="photo-strip is-empty" aria-label="No photos selected">
-        {Array.from({ length: 5 }, (_, index) => (
-          <span key={index} className="photo-placeholder">
-            <ImageIcon />
-          </span>
-        ))}
+        <ImageIcon />
+        <p>Your selected photos will appear here in story order.</p>
       </div>
     )
   }
@@ -51,6 +50,17 @@ function PhotoStrip({ assets }: Pick<ComposeScreenProps, 'assets'>) {
         <figure key={asset.id} className="photo-tile">
           <img src={asset.dataUrl} alt={asset.name} />
           <figcaption>{index + 1}</figcaption>
+          <div className="photo-tile-actions" aria-label={`Reorder or remove ${asset.name}`}>
+            <button type="button" onClick={() => onMoveAsset(asset.id, -1)} disabled={isGenerating || index === 0} aria-label={`Move ${asset.name} earlier`}>
+              <ArrowLeftIcon />
+            </button>
+            <button type="button" onClick={() => onMoveAsset(asset.id, 1)} disabled={isGenerating || index === assets.length - 1} aria-label={`Move ${asset.name} later`}>
+              <ArrowLeftIcon className="move-later-icon" />
+            </button>
+            <button type="button" className="remove-photo" onClick={() => onRemoveAsset(asset.id)} disabled={isGenerating} aria-label={`Remove ${asset.name}`}>
+              <TrashIcon />
+            </button>
+          </div>
         </figure>
       ))}
     </div>
@@ -63,7 +73,7 @@ function ProgressPanel({ generationProgress }: Pick<ComposeScreenProps, 'generat
   }
 
   return (
-    <section className="progress-panel" aria-live="polite">
+    <section className={`progress-panel is-${generationProgress.status}`} aria-live="polite" role={generationProgress.status === 'failed' ? 'alert' : 'status'}>
       <div className="progress-header">
         <div>
           <p className="eyebrow">Story build</p>
@@ -111,6 +121,8 @@ export function ComposeScreen({
   isGenerating,
   generationProgress,
   onFiles,
+  onRemoveAsset,
+  onMoveAsset,
   onToneChange,
   onNotesChange,
   onMusicCueChange,
@@ -128,14 +140,14 @@ export function ComposeScreen({
           <h2>Select the day</h2>
           <p>Choose 3 to 10 captures from the same outing. Memoir turns the sequence into a story map.</p>
         </div>
-        <label className="primary-button file-action">
+        <label className={`primary-button file-action${selectedCount >= 10 || isGenerating ? ' is-disabled' : ''}`} aria-disabled={selectedCount >= 10 || isGenerating}>
           <UploadIcon />
-          <span>{selectedCount ? `Next (${selectedCount})` : 'Choose photos'}</span>
-          <input type="file" accept="image/*" multiple onChange={onFiles} />
+          <span>{selectedCount >= 10 ? '10-photo limit reached' : selectedCount ? `Add photos (${selectedCount}/10)` : 'Choose photos'}</span>
+          <input type="file" accept="image/*" multiple onChange={onFiles} disabled={selectedCount >= 10 || isGenerating} />
         </label>
       </div>
 
-      <PhotoStrip assets={assets} />
+      <PhotoStrip assets={assets} isGenerating={isGenerating} onRemoveAsset={onRemoveAsset} onMoveAsset={onMoveAsset} />
 
       <div className="compose-grid">
         <section className="compose-panel">

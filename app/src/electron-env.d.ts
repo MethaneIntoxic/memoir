@@ -6,10 +6,5 @@ declare global {
       apiBase?: string
       packaged?: boolean
     }
-    memoirAndroidAi?: {
-      health(): Promise<unknown>
-      generateMemoir(payload: unknown): Promise<unknown>
-      cancelGeneration(jobId: string): Promise<unknown>
-    }
   }
 }

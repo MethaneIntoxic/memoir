@@ -1,5 +1,5 @@
 import type { Asset, Memoir, Theme } from '../types.ts'
-import { ArrowLeftIcon, DownloadIcon, EditIcon, ExportIcon, ImageIcon, MoreIcon, SaveIcon } from './icons.tsx'
+import { ArrowLeftIcon, DownloadIcon, EditIcon, ImageIcon, MoreIcon, SaveIcon } from './icons.tsx'
 
 type SectionField = 'caption' | 'body'
 
@@ -17,9 +17,7 @@ type EditorScreenProps = {
   onRewriteSection: (sectionId: string, field: SectionField) => void
   onMoveSection: (sectionId: string, direction: -1 | 1) => void
   onSave: () => void
-  onExportHtml: () => void
-  onExportPortable: () => void
-  onPrintPdf: () => void
+  onShare: () => void
   onDiagnostics: () => void
 }
 
@@ -76,11 +74,25 @@ function StoryCard({
         >
           <EditIcon />
         </button>
-        <button type="button" className="soft-button compact-button" onClick={() => onMoveSection(section.id, -1)} disabled={index === 0}>
-          Move left
+        <button
+          type="button"
+          className="icon-button"
+          onClick={() => onMoveSection(section.id, -1)}
+          disabled={index === 0}
+          aria-label={`Move chapter ${index + 1} left`}
+          title="Move left"
+        >
+          <ArrowLeftIcon />
         </button>
-        <button type="button" className="soft-button compact-button" onClick={() => onMoveSection(section.id, 1)} disabled={index === draft.sections.length - 1}>
-          Move right
+        <button
+          type="button"
+          className="icon-button"
+          onClick={() => onMoveSection(section.id, 1)}
+          disabled={index === draft.sections.length - 1}
+          aria-label={`Move chapter ${index + 1} right`}
+          title="Move right"
+        >
+          <ArrowLeftIcon className="move-right-icon" />
         </button>
         <button
           type="button"
@@ -111,9 +123,7 @@ export function EditorScreen({
   onRewriteSection,
   onMoveSection,
   onSave,
-  onExportHtml,
-  onExportPortable,
-  onPrintPdf,
+  onShare,
   onDiagnostics,
 }: EditorScreenProps) {
   return (
@@ -130,10 +140,11 @@ export function EditorScreen({
         <section className="memoir-cover">
           <div className="cover-copy">
             <p className="eyebrow">{new Date(draft.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</p>
-            <input
+            <textarea
               className="title-input"
               aria-label="Memoir title"
               value={draft.title}
+              rows={4}
               onChange={(event) => onTitleChange(event.target.value)}
             />
             <textarea
@@ -198,23 +209,15 @@ export function EditorScreen({
 
       <aside className="editor-sidebar">
         <h3>Keep this memoir</h3>
-        <p className="editor-sidebar-copy">Save it locally, export a web memoir, or print it as a PDF.</p>
+        <p className="editor-sidebar-copy">Save it locally or choose a private export format.</p>
         <div className="editor-actions">
           <button type="button" className="primary-button" onClick={onSave}>
             <SaveIcon />
             <span>Save</span>
           </button>
-          <button type="button" className="soft-button" onClick={onExportHtml}>
-            <ExportIcon />
-            <span>Web memoir</span>
-          </button>
-          <button type="button" className="soft-button" onClick={onExportPortable}>
+          <button type="button" className="soft-button" onClick={onShare}>
             <DownloadIcon />
-            <span>Portable file</span>
-          </button>
-          <button type="button" className="soft-button" onClick={onPrintPdf}>
-            <DownloadIcon />
-            <span>Print / PDF</span>
+            <span>Share &amp; export</span>
           </button>
         </div>
         {showDebugUi ? (
