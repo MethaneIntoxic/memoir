@@ -15,6 +15,6 @@
   "bundled": true,
   "runtime": "embedded-llama",
   "tier": "qwen35-0.8b-q5",
-  "source": "https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/main/Qwen_Qwen3.5-0.8B-Q5_K_M.gguf",
-  "mmprojSource": "https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/main/mmproj-Qwen_Qwen3.5-0.8B-f16.gguf"
+  "source": "https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/6f447fc6494c4b0f7dc269f8c39da6c61555a0de/Qwen_Qwen3.5-0.8B-Q5_K_M.gguf",
+  "mmprojSource": "https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/6f447fc6494c4b0f7dc269f8c39da6c61555a0de/mmproj-Qwen_Qwen3.5-0.8B-f16.gguf"
 }

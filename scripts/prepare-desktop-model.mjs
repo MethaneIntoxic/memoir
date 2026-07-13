@@ -21,11 +21,11 @@ const TIERS = {
     readyFileName: 'Qwen_Qwen3.5-0.8B-Q5_K_M.ready',
     contextSize: 8192,
     source:
-      'https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/main/Qwen_Qwen3.5-0.8B-Q5_K_M.gguf',
+      'https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/6f447fc6494c4b0f7dc269f8c39da6c61555a0de/Qwen_Qwen3.5-0.8B-Q5_K_M.gguf',
     sha256: '1214AFEBFE07D894E550505E3DAB6E913953A3FB123EA425D7D7731962479FCA',
     sizeBytes: 625860768,
     mmprojSource:
-      'https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/main/mmproj-Qwen_Qwen3.5-0.8B-f16.gguf',
+      'https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/6f447fc6494c4b0f7dc269f8c39da6c61555a0de/mmproj-Qwen_Qwen3.5-0.8B-f16.gguf',
     mmprojFileName: 'mmproj-Qwen_Qwen3.5-0.8B-f16.gguf',
     mmprojSha256: '1DC1351C82E41B48EDB55FD6DDFA7CA60FB5A16B3D5ABF3CE7054880DD022847',
     mmprojSizeBytes: 204987104,

@@ -29,7 +29,7 @@ const qwen35Q5Runtime = {
   runtimeId: 'embedded-llama',
   quantization: 'Q5_K_M',
   modelFileName: 'Qwen_Qwen3.5-0.8B-Q5_K_M.gguf',
-  modelSource: 'https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/main/Qwen_Qwen3.5-0.8B-Q5_K_M.gguf',
+  modelSource: 'https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/6f447fc6494c4b0f7dc269f8c39da6c61555a0de/Qwen_Qwen3.5-0.8B-Q5_K_M.gguf',
   modelSha256: '1214AFEBFE07D894E550505E3DAB6E913953A3FB123EA425D7D7731962479FCA',
   modelSizeBytes: 625860768,
   contextSize: 4096,

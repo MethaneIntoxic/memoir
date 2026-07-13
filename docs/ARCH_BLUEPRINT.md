@@ -11,7 +11,7 @@ The existing iOS and Android projects are retained. Android and iOS use the same
 - Shared UI: React 19.2, TypeScript 6, Vite 8.
 - Desktop: Electron 37 with the local Node server and embedded `llama.cpp` runtime.
 - Mobile shell: Capacitor 8.3 with Java/JNI on Android and Swift plus an Apple `llama.cpp` XCFramework on iOS.
-- Local model: `Qwen_Qwen3.5-0.8B-Q5_K_M.gguf`, identified and hashed by `mobile/runtime-manifest.json`.
+- Local model: `Qwen_Qwen3.5-0.8B-Q5_K_M.gguf`, identified and hashed by `mobile/runtime-manifest.json` and fetched from immutable Hugging Face revision `6f447fc6494c4b0f7dc269f8c39da6c61555a0de`.
 - Shared domain contracts: `packages/memoir-core` and the TypeScript validators in `app/src/memoir`.
 - Verification: Node test runner, TypeScript build, ESLint, Gradle/Android device smoke, Xcode/iOS device smoke, and browser screenshot comparison.
 

@@ -56,6 +56,8 @@ test('native build workflow compiles android and ios on their supported hosts', 
   const workflow = read('../.github/workflows/native-build.yml')
   const sharedScheme = read('../mobile/ios/App/App.xcodeproj/xcshareddata/xcschemes/App.xcscheme')
   assert.match(workflow, /runs-on: ubuntu-latest/)
+  assert.match(workflow, /find "\$ANDROID_SDK_ROOT\/cmdline-tools"/)
+  assert.match(workflow, /--licenses/)
   assert.match(workflow, /\.\/gradlew :app:assembleDebug/)
   assert.match(workflow, /runs-on: macos-15/)
   assert.match(workflow, /generic\/platform=iOS Simulator/)
