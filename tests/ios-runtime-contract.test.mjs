@@ -57,6 +57,9 @@ test('capacitor sync reapplies the pinned ios runtime package', () => {
   assert.match(configureScript, /memoir-icon-1024\.png/)
   assert.match(configureScript, /AppIcon-512@2x\.png/)
   assert.match(configureScript, /Splash\.imageset/)
+  assert.match(configureScript, /execFileAsync\('sips', \['--resampleHeightWidth', '1024', '1024'/)
+  assert.match(configureScript, /pixelWidth:\\s\*1024/)
+  assert.match(configureScript, /pixelHeight:\\s\*1024/)
 })
 
 test('native build workflow compiles android and ios on their supported hosts', () => {
