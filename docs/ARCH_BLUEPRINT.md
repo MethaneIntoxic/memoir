@@ -93,6 +93,15 @@ On Android and iOS, missing or unavailable native AI is a visible error. Mobile 
 - Memoir data and staged model files use complete file protection where compatible; model files are excluded from iCloud backup.
 - Runtime lifecycle responds to memory warnings, thermal pressure, backgrounding, and cancellation.
 
+### Native inference smoke architecture
+
+- CI must execute at least one bounded, non-empty token generation through each production engine. A successful compile, model hash, or library load is not a substitute for inference.
+- Android production and ordinary debug builds remain `arm64-v8a` only. The Gradle build accepts `x86_64` solely through an explicit, allowlisted smoke-test property, and the emulator test calls the same JNI entry point and bundled GGUF as the Capacitor plugin.
+- JNI batches must not retain pointers to loop-scoped token storage. The sampled token backing each one-token decode remains alive until the following decode completes.
+- The iOS smoke hook is compiled only when CI adds `MEMOIR_CI_INFERENCE_SMOKE`; normal Debug and every Release build omit it. It runs the production `MemoirRuntimeEngine` off the launch thread against the bundled model.
+- Smoke jobs emit only stable success/failure sentinels, elapsed time, and output byte counts. Generated memoir text, prompts containing user data, filesystem paths, and native exception details are never logged.
+- Every smoke has a bounded process timeout and fails unless generation returns a non-empty result. Emulator/simulator evidence complements but does not replace the physical-device release gates below.
+
 ### Desktop and browser
 
 - Electron remains local-only and uses its injected API base.

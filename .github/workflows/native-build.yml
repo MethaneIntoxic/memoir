@@ -63,9 +63,95 @@ jobs:
           if-no-files-found: error
           compression-level: 0
 
+  android-emulator-inference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            app/package-lock.json
+            mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: '21'
+      - name: Install JavaScript dependencies
+        run: |
+          npm ci --prefix app
+          npm ci --prefix mobile
+      - name: Install pinned Android native toolchain
+        run: |
+          sdkmanager_path="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -path '*/bin/sdkmanager' | sort -V | tail -n 1)"
+          test -n "$sdkmanager_path"
+          test -x "$sdkmanager_path"
+          yes | "$sdkmanager_path" --licenses >/dev/null
+          for attempt in 1 2 3; do
+            if "$sdkmanager_path" 'platforms;android-36' 'build-tools;35.0.0' 'cmake;3.22.1' 'ndk;27.0.12077973'; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            rm -rf "$ANDROID_SDK_ROOT/ndk/27.0.12077973" "$ANDROID_SDK_ROOT/.temp"
+            sleep $((attempt * 5))
+          done
+      - name: Prepare verified mobile model
+        run: npm --prefix mobile run prepare:model
+      - name: Synchronize Capacitor projects
+        run: npm --prefix mobile run cap:sync
+      - name: Enable Android emulator acceleration
+        run: |
+          test -e /dev/kvm
+          sudo chmod 666 /dev/kvm
+      - name: Run Android inference smoke on x86_64 emulator
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          cores: 4
+          ram-size: 8192M
+          disk-size: 8G
+          emulator-boot-timeout: 900
+          ndk: 27.0.12077973
+          cmake: 3.22.1
+          working-directory: mobile/android
+          script: |
+            ./gradlew :app:assembleDebug -PmemoirEmulatorSmoke=true --stacktrace
+            apk_path="app/build/outputs/apk/debug/app-debug.apk"
+            zipinfo -1 "$apk_path" | grep -qx 'lib/x86_64/libmemoirllama.so'
+            if zipinfo -1 "$apk_path" | grep -q '^lib/arm64-v8a/'; then
+              echo 'The emulator smoke APK unexpectedly contains arm64-v8a libraries.' >&2
+              exit 1
+            fi
+            mkdir -p "$GITHUB_WORKSPACE/output"
+            set +e
+            ./gradlew :app:connectedDebugAndroidTest \
+              -PmemoirEmulatorSmoke=true \
+              -Pandroid.testInstrumentationRunnerArguments.class=local.memoir.mobile.AndroidRuntimeInferenceSmokeTest \
+              --stacktrace
+            test_status=$?
+            adb logcat -d > "$GITHUB_WORKSPACE/output/android-emulator-logcat.txt" 2>&1 || true
+            exit "$test_status"
+      - name: Upload Android inference smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: memoir-android-inference-smoke
+          path: |
+            mobile/android/app/build/reports/androidTests/
+            mobile/android/app/build/outputs/androidTest-results/
+            output/android-emulator-logcat.txt
+          if-no-files-found: warn
+
   ios-simulator:
-    runs-on: macos-15
-    timeout-minutes: 45
+    runs-on: macos-15-intel
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -83,6 +169,29 @@ jobs:
         run: npm --prefix mobile run prepare:model
       - name: Synchronize Capacitor projects
         run: npm --prefix mobile run cap:sync
+      - name: Boot an available iOS Simulator
+        run: |
+          simulator_id="$(python3 - <<'PY'
+          import json
+          import subprocess
+
+          inventory = json.loads(subprocess.check_output(
+              ["xcrun", "simctl", "list", "devices", "available", "-j"],
+              text=True,
+          ))
+          for runtime in sorted(inventory["devices"], reverse=True):
+              if "iOS" not in runtime:
+                  continue
+              iphones = [device for device in inventory["devices"][runtime] if device["name"].startswith("iPhone")]
+              if iphones:
+                  print(iphones[0]["udid"])
+                  break
+          PY
+          )"
+          test -n "$simulator_id"
+          echo "IOS_SIMULATOR_ID=$simulator_id" >> "$GITHUB_ENV"
+          xcrun simctl boot "$simulator_id" || true
+          xcrun simctl bootstatus "$simulator_id" -b
       - name: Resolve native packages
         run: xcodebuild -resolvePackageDependencies -project mobile/ios/App/App.xcodeproj -scheme App
       - name: Build iOS Simulator app
@@ -91,7 +200,73 @@ jobs:
           -project mobile/ios/App/App.xcodeproj
           -scheme App
           -configuration Debug
-          -destination 'generic/platform=iOS Simulator'
+          -destination "platform=iOS Simulator,id=$IOS_SIMULATOR_ID"
           -derivedDataPath output/ios-derived-data
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS='$(inherited) DEBUG MEMOIR_CI_INFERENCE_SMOKE'
           CODE_SIGNING_ALLOWED=NO
           build
+      - name: Run bundled iOS inference smoke
+        env:
+          MEMOIR_IOS_BUNDLE_ID: local.memoir.mobile
+        run: |
+          app_path="$GITHUB_WORKSPACE/output/ios-derived-data/Build/Products/Debug-iphonesimulator/App.app"
+          model_path="$app_path/Qwen_Qwen3.5-0.8B-Q5_K_M.gguf"
+          test -d "$app_path"
+          test "$(stat -f%z "$model_path")" = "625860768"
+          xcrun simctl install "$IOS_SIMULATOR_ID" "$app_path"
+          python3 - <<'PY'
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+
+          environment = os.environ.copy()
+          environment["SIMCTL_CHILD_MEMOIR_CI_INFERENCE_SMOKE"] = "1"
+          try:
+              completed = subprocess.run(
+                  [
+                      "xcrun", "simctl", "launch", "--console-pty",
+                      environment["IOS_SIMULATOR_ID"], environment["MEMOIR_IOS_BUNDLE_ID"],
+                  ],
+                  env=environment,
+                  stdout=subprocess.PIPE,
+                  stderr=subprocess.STDOUT,
+                  text=True,
+                  timeout=300,
+                  check=False,
+              )
+              output = completed.stdout
+          except subprocess.TimeoutExpired as error:
+              output = error.stdout or ""
+              if isinstance(output, bytes):
+                  output = output.decode("utf-8", errors="replace")
+              Path("output/ios-inference-smoke.log").write_text(output, encoding="utf-8")
+              raise SystemExit("iOS inference smoke exceeded 300 seconds") from error
+
+          Path("output/ios-inference-smoke.log").write_text(output, encoding="utf-8")
+          print(output, end="")
+          successes = re.findall(
+              r"^MEMOIR_IOS_INFERENCE_SMOKE_OK output_bytes=([1-9][0-9]*) elapsed_ms=([0-9]+)$",
+              output,
+              flags=re.MULTILINE,
+          )
+          failures = re.findall(r"^MEMOIR_IOS_INFERENCE_SMOKE_FAIL ", output, flags=re.MULTILINE)
+          if completed.returncode != 0 or len(successes) != 1 or failures:
+              raise SystemExit(
+                  f"iOS inference smoke failed: returncode={completed.returncode}, "
+                  f"successes={len(successes)}, failures={len(failures)}"
+              )
+          PY
+      - name: Upload iOS inference smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: memoir-ios-inference-smoke
+          path: output/ios-inference-smoke.log
+          if-no-files-found: warn
+      - name: Shut down iOS Simulator
+        if: always()
+        run: |
+          if [ -n "${IOS_SIMULATOR_ID:-}" ]; then
+            xcrun simctl shutdown "$IOS_SIMULATOR_ID" || true
+          fi

@@ -14,6 +14,8 @@
 namespace {
 constexpr const char * LOG_TAG = "MemoirLlama";
 constexpr int DEFAULT_CONTEXT_TOKENS = 2048;
+constexpr int MIN_GENERATION_TOKENS = 8;
+constexpr int MAX_GENERATION_TOKENS = 900;
 
 std::mutex g_mutex;
 std::mutex g_cancel_mutex;
@@ -170,7 +172,7 @@ std::string generate_text(const std::string & model_path, const std::string & pr
         throw std::runtime_error("android-ai-tokenize-failed");
     }
 
-    const int predicted_tokens = std::max(64, std::min(max_tokens, 900));
+    const int predicted_tokens = std::max(MIN_GENERATION_TOKENS, std::min(max_tokens, MAX_GENERATION_TOKENS));
     const int n_ctx = std::max(DEFAULT_CONTEXT_TOKENS, static_cast<int>(prompt_tokens.size()) + predicted_tokens + 32);
     const int n_threads = std::max(1, std::min(4, static_cast<int>(std::thread::hardware_concurrency())));
 
@@ -197,6 +199,7 @@ std::string generate_text(const std::string & model_path, const std::string & pr
 
     std::string output;
     llama_batch batch = llama_batch_get_one(prompt_tokens.data(), prompt_tokens.size());
+    llama_token sampled_token{};
 
     for (int generated = 0; generated < predicted_tokens; generated += 1) {
         if (is_cancelled(job_id)) {
@@ -211,15 +214,15 @@ std::string generate_text(const std::string & model_path, const std::string & pr
             throw std::runtime_error("android-ai-decode-failed");
         }
 
-        llama_token next_token = llama_sampler_sample(sampler, ctx, -1);
-        if (llama_vocab_is_eog(vocab, next_token)) {
+        sampled_token = llama_sampler_sample(sampler, ctx, -1);
+        if (llama_vocab_is_eog(vocab, sampled_token)) {
             break;
         }
 
-        std::string piece = token_to_piece(vocab, next_token);
+        std::string piece = token_to_piece(vocab, sampled_token);
         output += piece;
 
-        batch = llama_batch_get_one(&next_token, 1);
+        batch = llama_batch_get_one(&sampled_token, 1);
     }
 
     llama_sampler_free(sampler);

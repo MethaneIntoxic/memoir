@@ -49,11 +49,55 @@ test('android native AI bridge is wired to real llama.cpp inference', () => {
   const native = readFileSync(nativePath, 'utf8')
 
   assert.match(plugin, /nativeGenerate\(/)
+  assert.match(plugin, /nativeGenerate\(modelFile\(\)\.getAbsolutePath\(\), buildMemoirPrompt\(request\), jobId, 700\)/)
+  assert.match(plugin, /nativeGenerate\(modelFile\(\)\.getAbsolutePath\(\), buildRewritePrompt\(request\), jobId, 400\)/)
   assert.doesNotMatch(plugin, /android-ai-native-inference-runtime-missing/)
   assert.match(cmake, /add_subdirectory\(.+llama\.cpp/)
   assert.match(cmake, /target_link_libraries\(memoirllama.+llama/)
   assert.match(native, /llama_model_load_from_file|llama_load_model_from_file/)
   assert.match(native, /llama_decode/)
+  assert.match(native, /llama_token sampled_token\{\};[\s\S]*llama_batch_get_one\(&sampled_token, 1\)/)
+  assert.doesNotMatch(native, /llama_batch_get_one\(&next_token, 1\)/)
+  assert.match(native, /MIN_GENERATION_TOKENS = 8/)
+  assert.match(native, /MAX_GENERATION_TOKENS = 900/)
+})
+
+test('android emulator inference smoke is explicit and cannot weaken release ABI', () => {
+  const gradle = readFileSync(new URL('../mobile/android/app/build.gradle', import.meta.url), 'utf8')
+  const workflow = readFileSync(new URL('../.github/workflows/native-build.yml', import.meta.url), 'utf8')
+  const smokeTestPath = new URL(
+    '../mobile/android/app/src/androidTest/java/local/memoir/mobile/AndroidRuntimeInferenceSmokeTest.java',
+    import.meta.url,
+  )
+  const staleTestPath = new URL(
+    '../mobile/android/app/src/androidTest/java/com/getcapacitor/myapp/ExampleInstrumentedTest.java',
+    import.meta.url,
+  )
+
+  assert.match(gradle, /gradleProperty\("memoirEmulatorSmoke"\)/)
+  assert.match(gradle, /memoirEmulatorSmokeProperty != "true"/)
+  assert.match(gradle, /memoirEmulatorSmoke[\s\S]*abiFilters "x86_64"[\s\S]*else[\s\S]*abiFilters "arm64-v8a"/)
+  assert.match(gradle, /memoirEmulatorSmoke[\s\S]*graph\.allTasks[\s\S]*contains\("release"\)/)
+
+  assert.equal(existsSync(smokeTestPath), true)
+  assert.equal(existsSync(staleTestPath), false)
+  const smokeTest = readFileSync(smokeTestPath, 'utf8')
+  assert.match(smokeTest, /getPlugin\("MemoirRuntime"\)/)
+  assert.match(smokeTest, /getDeclaredMethod\(\s*"stageVerifiedAsset"/)
+  assert.match(smokeTest, /new File\(targetContext\.getFilesDir\(\), "memoir-models"\)/)
+  assert.match(smokeTest, /assertEquals\(expectedSha256, sha256\(modelFile\)\)/)
+  assert.match(smokeTest, /modelFile\.getName\(\) \+ "\.verified"/)
+  assert.match(smokeTest, /getDeclaredMethod\(\s*"nativeGenerate"/)
+  assert.match(smokeTest, /"android-runtime-smoke",\s*32/)
+  assert.match(smokeTest, /assertFalse\(generated\.trim\(\)\.isEmpty\(\)\)/)
+
+  assert.match(workflow, /android-emulator-inference:/)
+  assert.match(workflow, /ReactiveCircus\/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d/)
+  assert.match(workflow, /arch: x86_64/)
+  assert.match(workflow, /ram-size: 8192M/)
+  assert.match(workflow, /:app:connectedDebugAndroidTest \\\n\s+-PmemoirEmulatorSmoke=true/)
+  assert.match(workflow, /local\.memoir\.mobile\.AndroidRuntimeInferenceSmokeTest/)
+  assert.match(workflow, /lib\/x86_64\/libmemoirllama\.so/)
 })
 
 test('android photo context is bounded, offline, and cleared after generation', () => {

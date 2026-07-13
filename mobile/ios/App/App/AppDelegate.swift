@@ -1,6 +1,11 @@
 import UIKit
 import Capacitor
 
+#if MEMOIR_CI_INFERENCE_SMOKE
+import CapApp_SPM
+import Darwin
+#endif
+
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
@@ -8,6 +13,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         protectMemoirLocalData()
+#if MEMOIR_CI_INFERENCE_SMOKE
+        if ProcessInfo.processInfo.environment["MEMOIR_CI_INFERENCE_SMOKE"] == "1" {
+            runCIInferenceSmoke()
+        }
+#endif
         return true
     }
 
@@ -67,4 +77,60 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
     }
 
+#if MEMOIR_CI_INFERENCE_SMOKE
+    private func runCIInferenceSmoke() {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let started = DispatchTime.now().uptimeNanoseconds
+            do {
+                guard let modelURL = Bundle.main.url(
+                    forResource: "Qwen_Qwen3.5-0.8B-Q5_K_M",
+                    withExtension: "gguf"
+                ) else {
+                    throw CIInferenceSmokeError.modelMissing
+                }
+                let values = try modelURL.resourceValues(forKeys: [.fileSizeKey])
+                guard values.fileSize == 625_860_768 else {
+                    throw CIInferenceSmokeError.modelSizeMismatch
+                }
+
+                let engine = MemoirRuntimeEngine()
+                let output = try engine.generate(
+                    modelURL: modelURL,
+                    prompt: "Return a short JSON object with an ok boolean.",
+                    jobID: "ios-ci-inference-smoke",
+                    maxTokens: 32
+                )
+                let outputBytes = output.trimmingCharacters(in: .whitespacesAndNewlines).utf8.count
+                guard outputBytes > 0 else {
+                    throw CIInferenceSmokeError.emptyOutput
+                }
+
+                let elapsedMS = (DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
+                emitCIInferenceSmokeLine(
+                    "MEMOIR_IOS_INFERENCE_SMOKE_OK output_bytes=\(outputBytes) elapsed_ms=\(elapsedMS)"
+                )
+                Darwin.exit(EXIT_SUCCESS)
+            } catch {
+                let elapsedMS = (DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
+                emitCIInferenceSmokeLine(
+                    "MEMOIR_IOS_INFERENCE_SMOKE_FAIL code=native-inference-failed elapsed_ms=\(elapsedMS)"
+                )
+                Darwin.exit(EXIT_FAILURE)
+            }
+        }
+    }
+#endif
+
 }
+
+#if MEMOIR_CI_INFERENCE_SMOKE
+private enum CIInferenceSmokeError: Error {
+    case modelMissing
+    case modelSizeMismatch
+    case emptyOutput
+}
+
+private func emitCIInferenceSmokeLine(_ line: String) {
+    FileHandle.standardOutput.write(Data((line + "\n").utf8))
+}
+#endif
