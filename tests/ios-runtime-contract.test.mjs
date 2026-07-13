@@ -58,6 +58,8 @@ test('native build workflow compiles android and ios on their supported hosts', 
   assert.match(workflow, /runs-on: ubuntu-latest/)
   assert.match(workflow, /find "\$ANDROID_SDK_ROOT\/cmdline-tools"/)
   assert.match(workflow, /--licenses/)
+  assert.match(workflow, /for attempt in 1 2 3/)
+  assert.match(workflow, /ANDROID_SDK_ROOT\/ndk\/27\.0\.12077973/)
   assert.match(workflow, /\.\/gradlew :app:assembleDebug/)
   assert.match(workflow, /runs-on: macos-15/)
   assert.match(workflow, /generic\/platform=iOS Simulator/)

@@ -39,7 +39,16 @@ jobs:
           test -n "$sdkmanager_path"
           test -x "$sdkmanager_path"
           yes | "$sdkmanager_path" --licenses >/dev/null
-          "$sdkmanager_path" 'platforms;android-36' 'build-tools;35.0.0' 'cmake;3.22.1' 'ndk;27.0.12077973'
+          for attempt in 1 2 3; do
+            if "$sdkmanager_path" 'platforms;android-36' 'build-tools;35.0.0' 'cmake;3.22.1' 'ndk;27.0.12077973'; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            rm -rf "$ANDROID_SDK_ROOT/ndk/27.0.12077973" "$ANDROID_SDK_ROOT/.temp"
+            sleep $((attempt * 5))
+          done
       - name: Prepare verified mobile model
         run: npm --prefix mobile run prepare:model
       - name: Synchronize Capacitor projects
