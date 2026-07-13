@@ -121,23 +121,7 @@ jobs:
           ndk: 27.0.12077973
           cmake: 3.22.1
           working-directory: mobile/android
-          script: |
-            ./gradlew :app:assembleDebug -PmemoirEmulatorSmoke=true --stacktrace
-            apk_path="app/build/outputs/apk/debug/app-debug.apk"
-            zipinfo -1 "$apk_path" | grep -qx 'lib/x86_64/libmemoirllama.so'
-            if zipinfo -1 "$apk_path" | grep -q '^lib/arm64-v8a/'; then
-              echo 'The emulator smoke APK unexpectedly contains arm64-v8a libraries.' >&2
-              exit 1
-            fi
-            mkdir -p "$GITHUB_WORKSPACE/output"
-            set +e
-            ./gradlew :app:connectedDebugAndroidTest \
-              -PmemoirEmulatorSmoke=true \
-              -Pandroid.testInstrumentationRunnerArguments.class=local.memoir.mobile.AndroidRuntimeInferenceSmokeTest \
-              --stacktrace
-            test_status=$?
-            adb logcat -d > "$GITHUB_WORKSPACE/output/android-emulator-logcat.txt" 2>&1 || true
-            exit "$test_status"
+          script: bash "$GITHUB_WORKSPACE/mobile/scripts/run-android-emulator-smoke.sh"
       - name: Upload Android inference smoke evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -146,6 +130,8 @@ jobs:
           path: |
             mobile/android/app/build/reports/androidTests/
             mobile/android/app/build/outputs/androidTest-results/
+            output/android-emulator-apk-entries.txt
+            output/android-emulator-apk-sha256.txt
             output/android-emulator-logcat.txt
           if-no-files-found: warn
 

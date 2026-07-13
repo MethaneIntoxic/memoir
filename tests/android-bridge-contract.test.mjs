@@ -65,6 +65,7 @@ test('android native AI bridge is wired to real llama.cpp inference', () => {
 test('android emulator inference smoke is explicit and cannot weaken release ABI', () => {
   const gradle = readFileSync(new URL('../mobile/android/app/build.gradle', import.meta.url), 'utf8')
   const workflow = readFileSync(new URL('../.github/workflows/native-build.yml', import.meta.url), 'utf8')
+  const smokeScriptPath = new URL('../mobile/scripts/run-android-emulator-smoke.sh', import.meta.url)
   const smokeTestPath = new URL(
     '../mobile/android/app/src/androidTest/java/local/memoir/mobile/AndroidRuntimeInferenceSmokeTest.java',
     import.meta.url,
@@ -95,9 +96,14 @@ test('android emulator inference smoke is explicit and cannot weaken release ABI
   assert.match(workflow, /ReactiveCircus\/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d/)
   assert.match(workflow, /arch: x86_64/)
   assert.match(workflow, /ram-size: 8192M/)
-  assert.match(workflow, /:app:connectedDebugAndroidTest \\\n\s+-PmemoirEmulatorSmoke=true/)
-  assert.match(workflow, /local\.memoir\.mobile\.AndroidRuntimeInferenceSmokeTest/)
-  assert.match(workflow, /lib\/x86_64\/libmemoirllama\.so/)
+  assert.match(workflow, /script: bash "\$GITHUB_WORKSPACE\/mobile\/scripts\/run-android-emulator-smoke\.sh"/)
+  assert.equal(existsSync(smokeScriptPath), true)
+  const smokeScript = readFileSync(smokeScriptPath, 'utf8')
+  assert.match(smokeScript, /set -euo pipefail/)
+  assert.match(smokeScript, /trap capture_logcat EXIT/)
+  assert.match(smokeScript, /:app:connectedDebugAndroidTest \\\n\s+-PmemoirEmulatorSmoke=true/)
+  assert.match(smokeScript, /local\.memoir\.mobile\.AndroidRuntimeInferenceSmokeTest/)
+  assert.match(smokeScript, /lib\/x86_64\/libmemoirllama\.so/)
 })
 
 test('android photo context is bounded, offline, and cleared after generation', () => {
