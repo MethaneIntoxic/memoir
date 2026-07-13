@@ -87,6 +87,7 @@ tasks.register("prepareMemoirLlamaCppSource") {
             if (currentCommit == memoirLlamaCppCommit) {
                 return
             }
+            delete memoirLlamaCppDir
         }
 
         if (memoirLlamaCppDir.exists() && !new File(memoirLlamaCppDir, ".git").exists()) {
@@ -94,27 +95,24 @@ tasks.register("prepareMemoirLlamaCppSource") {
         }
 
         if (!memoirLlamaCppDir.exists()) {
+            mkdir memoirLlamaCppDir
             exec {
-                commandLine "git", "clone", "--filter=blob:none", "https://github.com/ggml-org/llama.cpp.git", memoirLlamaCppDir.absolutePath
+                workingDir memoirLlamaCppDir
+                commandLine "git", "init"
+            }
+            exec {
+                workingDir memoirLlamaCppDir
+                commandLine "git", "remote", "add", "origin", "https://github.com/ggml-org/llama.cpp.git"
             }
         }
 
-        exec {
-            workingDir memoirLlamaCppDir
-            commandLine "git", "remote", "remove", "origin"
-            ignoreExitValue true
-        }
-        exec {
-            workingDir memoirLlamaCppDir
-            commandLine "git", "remote", "add", "origin", "https://github.com/ggml-org/llama.cpp.git"
-        }
         exec {
             workingDir memoirLlamaCppDir
             commandLine "git", "fetch", "--depth", "1", "origin", memoirLlamaCppCommit
         }
         exec {
             workingDir memoirLlamaCppDir
-            commandLine "git", "checkout", "--detach", memoirLlamaCppCommit
+            commandLine "git", "checkout", "--detach", "FETCH_HEAD"
         }
     }
 }
