@@ -33,6 +33,13 @@ try {
     } finally {
         Pop-Location
     }
+
+    & node (Join-Path $PSScriptRoot 'verify-android-apk.mjs') `
+        --apk (Join-Path $mobileRoot 'android\app\build\outputs\apk\debug\app-debug.apk') `
+        --abi arm64-v8a
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Android debug APK verification failed.'
+    }
 } finally {
     Pop-Location
 }

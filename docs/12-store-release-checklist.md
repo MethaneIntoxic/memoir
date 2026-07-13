@@ -1,15 +1,12 @@
-# Store Release Checklist
+# Store and Distribution Checklist
 
 ## Shared
 
-- [ ] `npm test`
-- [ ] `npm --prefix app run test`
-- [ ] `npm run build`
-- [ ] `npm run lint`
-- [ ] `npm run release:readiness`
-- [ ] Verify `.memoir` import/export round trip.
-- [ ] Verify diagnostics contain no raw image data.
-- [ ] Publish privacy policy and data deletion language.
+- [ ] `npm run smoke`
+- [ ] `npm run release:readiness` and confirm `releaseReady: true`
+- [ ] `.memoir` import/export round trip passes with representative archives.
+- [ ] Diagnostics contain no raw images, prompts, generated text, paths, or secrets beyond the documented support fields.
+- [ ] Privacy policy, deletion language, third-party notices, age rating, and export-compliance determination are complete.
 
 ## Windows
 
@@ -17,32 +14,30 @@
 - [ ] `npm run dist:desktop:single-file`
 - [ ] `npm run smoke:desktop-single-file`
 - [ ] `npm run smoke:desktop-quality`
-- [ ] Verify `desktop\dist\Memoir-0.1.0-portable.exe` exists and is below the 2.5 GB hard shipping gate.
-- [ ] Launch the portable EXE on a clean Windows user profile without unzipping or installing.
-- [ ] Confirm the local AI banner reports embedded runtime readiness.
-- [ ] Confirm the manifest tier is `qwen35-0.8b-q5`; use `qwen3vl-q4` or `qwen3vl-q3` only for larger fallback build experiments.
-- [ ] `npm run dist:desktop` for diagnostic ZIP/unpacked validation when needed.
-- [ ] Run packaged resource smoke.
-- [ ] Run desktop release smoke.
-- [ ] Keep ZIP publishing as a recovery artifact, not the primary user-facing release.
-- [ ] Sign release artifact before public distribution.
+- [ ] Portable EXE is below 2.5 GB and built from the intended commit.
+- [ ] Clean-profile launch and local generation pass.
+- [ ] Artifact is code-signed before public distribution.
 
 ## Android
 
-- [ ] Install mobile dependencies in `mobile/`.
-- [ ] Use JDK 21 with Android SDK platform 36, build-tools 36, CMake, and NDK.
-- [ ] `npm run cap:add:android`
-- [ ] `npm run cap:sync`
-- [ ] `npm --prefix mobile run build:android:apk`
-- [ ] Verify Qwen model assets are copied from `desktop/resources/models` into generated Android APK assets.
-- [ ] Sign the release APK with `MEMOIR_ANDROID_KEYSTORE`, `MEMOIR_ANDROID_KEYSTORE_PASSWORD`, `MEMOIR_ANDROID_KEY_ALIAS`, and `MEMOIR_ANDROID_KEY_PASSWORD`.
-- [ ] Verify `mobile/android/app/build/outputs/apk/release/app-release.apk` with `apksigner verify --verbose`.
-- [ ] Install the APK on a clean Android device or emulator and confirm the native AI bridge health result.
+- [ ] `npm install --prefix mobile`
+- [ ] `npm --prefix mobile run prepare:model`
+- [ ] `npm --prefix mobile run bootstrap:android -- -AcceptAndroidSdkLicenses`
+- [ ] `npm --prefix mobile run build:android:debug`
+- [ ] `npm --prefix mobile run verify:android:debug`
+- [ ] `npm --prefix mobile run smoke:android:device` passes on the lowest supported phone in Airplane Mode.
+- [ ] Public prepare, three-photo staging/generation, first-action rewrite, active cancellation/recovery, archive relaunch, and export/share pass.
+- [ ] Configure `MEMOIR_ANDROID_KEYSTORE`, `MEMOIR_ANDROID_KEYSTORE_PASSWORD`, `MEMOIR_ANDROID_KEY_ALIAS`, and `MEMOIR_ANDROID_KEY_PASSWORD`.
+- [ ] `npm --prefix mobile run build:android:apk` produces a signed Release APK.
+- [ ] Run the APK verifier and the complete physical acceptance against that signed Release artifact.
+- [ ] Record signature certificate, SHA-256, size, ABI, model allowlist, permission set, commit, device matrix, latency, memory, and thermals.
 
 ## iOS
 
-- [ ] `npm run cap:add:ios`
-- [ ] `npm run cap:sync`
-- [ ] Defer archive/upload until macOS with Xcode 26 or later is available.
-- [ ] Confirm model assets are data assets and executable runtime is bundled.
-- [ ] Complete privacy, encryption, and age-rating metadata.
+- [ ] On macOS: `npm ci --prefix app`, `npm ci --prefix mobile`, `npm --prefix mobile run prepare:model`, and `npm --prefix mobile run cap:sync`.
+- [ ] Unsigned generic-iOS Release build succeeds and both the app/runtime contain arm64.
+- [ ] Use Xcode 26+ and an Apple Developer team for signed device/archive work.
+- [ ] Complete the signed physical-iPhone flow in `docs/15-physical-device-acceptance.md` on the lowest supported device.
+- [ ] Archive with destination `generic/platform=iOS`; verify code signature, entitlements, arm64 binaries, exact model size/hash, and generated privacy report.
+- [ ] Complete privacy nutrition labels, encryption/export compliance, age rating, screenshots, support/privacy URLs, and regional requirements.
+- [ ] Upload to App Store Connect/TestFlight and rerun offline acceptance on the processed TestFlight build.

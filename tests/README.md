@@ -1,11 +1,14 @@
-# Test Plan Scaffold
+# Test Map
 
-This folder will hold:
+Root `npm test` covers server fallback/JSON/context behavior, portable schema/export contracts, development startup, packaged desktop resources, UI/native bridge contracts, and release-readiness structure.
 
-- unit tests for schema and services,
-- integration tests for import, generation, editing, and export,
-- renderer regression fixtures,
-- device-level smoke and resilience tests,
-- privacy and deletion verification cases.
+`npm run test:client` covers image sanitation, document editing, export purity, generation job behavior, native staging/order, native cancellation routing, model preparation before compose/rewrite, and validation.
 
-The test suite must validate not only correctness, but also trust boundaries such as metadata stripping, authored-content protection, and recovery after interruption.
+Native workflow evidence adds:
+
+- arm64 Android APK compilation and final-package inspection;
+- x86_64 Android emulator llama inference through the JNI engine;
+- iOS Simulator llama inference through the production engine;
+- unsigned arm64 iOS Release compilation and resource checks.
+
+Physical-device acceptance is deliberately separate. Run and retain the evidence described in `docs/15-physical-device-acceptance.md` before changing mobile release status.

@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --test src/memoir/assets.test.ts src/memoir/document.test.ts src/memoir/export.test.ts src/memoir/generation.test.ts src/memoir/validation.test.ts"
+    "test": "node --test src/memoir/assets.test.ts src/memoir/document.test.ts src/memoir/export.test.ts src/memoir/generation.test.ts src/memoir/validation.test.ts src/platform/runtime-adapter.test.ts"
   },
   "dependencies": {
     "@capacitor/core": "^8.3.3",

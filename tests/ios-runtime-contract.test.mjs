@@ -32,6 +32,8 @@ test('ios registers the platform-neutral runtime plugin with bounded local infer
   assert.match(plugin, /VNClassifyImageRequest\(\)/)
   assert.match(plugin, /assets\.prefix\(maximumPhotoContextAssets\)/)
   assert.match(plugin, /defer \{ self\.clearStagedAssetState\(\) \}/)
+  assert.match(plugin, /minimumPhysicalMemoryBytes: UInt64 = 7_000_000_000/)
+  assert.match(plugin, /native-ai-unsupported-memory/)
   assert.doesNotMatch(plugin, /"dataUrl": request\.dataUrl/)
 })
 
@@ -48,8 +50,12 @@ test('ios local data is excluded from backup and covered by file protection', ()
 
 test('capacitor sync reapplies the pinned ios runtime package', () => {
   const mobilePackage = JSON.parse(read('../mobile/package.json'))
+  const configureScript = read('../mobile/scripts/configure-ios-runtime.mjs')
   assert.match(mobilePackage.scripts['cap:sync'], /configure-ios-runtime\.mjs/)
   assert.equal(existsSync(new URL('../mobile/scripts/configure-ios-runtime.mjs', import.meta.url)), true)
+  assert.match(configureScript, /memoir-icon-1024\.png/)
+  assert.match(configureScript, /AppIcon-512@2x\.png/)
+  assert.match(configureScript, /Splash\.imageset/)
 })
 
 test('native build workflow compiles android and ios on their supported hosts', () => {
@@ -65,6 +71,9 @@ test('native build workflow compiles android and ios on their supported hosts', 
   assert.match(workflow, /runs-on: macos-15-intel/)
   assert.match(workflow, /platform=iOS Simulator,id=\$IOS_SIMULATOR_ID/)
   assert.match(workflow, /CODE_SIGNING_ALLOWED=NO/)
+  assert.match(workflow, /generic\/platform=iOS/)
+  assert.match(workflow, /Release-iphoneos\/App\.app/)
+  assert.match(workflow, /lipo -archs "\$app_path\/App"/)
   assert.match(workflow, /MEMOIR_CI_INFERENCE_SMOKE/)
   assert.match(workflow, /xcrun simctl launch "--console-pty"|"launch", "--console-pty"/)
   assert.match(workflow, /MEMOIR_IOS_INFERENCE_SMOKE_OK output_bytes=/)

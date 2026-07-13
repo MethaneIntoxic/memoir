@@ -157,6 +157,10 @@ std::string token_to_piece(const llama_vocab * vocab, llama_token token) {
 std::string generate_text(const std::string & model_path, const std::string & prompt, const std::string & job_id, int max_tokens) {
     std::lock_guard<std::mutex> lock(g_mutex);
 
+    if (is_cancelled(job_id)) {
+        throw std::runtime_error("android-ai-generation-cancelled");
+    }
+
     if (!ensure_model_loaded(model_path)) {
         throw std::runtime_error("android-ai-model-load-failed");
     }

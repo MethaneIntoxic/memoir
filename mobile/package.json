@@ -10,6 +10,8 @@
     "cap:sync": "npm run build:web && npx cap sync && node scripts/configure-ios-runtime.mjs",
     "bootstrap:android": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/bootstrap-android-toolchain.ps1",
     "build:android:debug": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android-debug.ps1",
+    "verify:android:debug": "node scripts/verify-android-apk.mjs --apk android/app/build/outputs/apk/debug/app-debug.apk --abi arm64-v8a",
+    "smoke:android:device": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-android-device-acceptance.ps1",
     "build:android:apk": "npm run cap:sync && cd android && gradlew.bat :app:assembleRelease",
     "open:android": "npx cap open android",
     "open:ios": "npx cap open ios"

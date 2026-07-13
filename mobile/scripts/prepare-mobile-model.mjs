@@ -9,7 +9,22 @@ import path from 'node:path'
 const mobileRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const repositoryRoot = path.resolve(mobileRoot, '..')
 const manifest = JSON.parse(await readFile(path.join(mobileRoot, 'runtime-manifest.json'), 'utf8'))
-const runtime = manifest.platforms.android
+const platformArgument = process.argv.find((argument) => argument.startsWith('--platform='))?.split('=')[1] || 'all'
+if (!['all', 'android', 'ios'].includes(platformArgument)) {
+  throw new Error('prepare-mobile-model --platform must be all, android, or ios')
+}
+const selectedRuntimes = platformArgument === 'all'
+  ? [manifest.platforms.android, manifest.platforms.ios]
+  : [manifest.platforms[platformArgument]]
+const runtime = selectedRuntimes[0]
+if (!runtime || selectedRuntimes.some((candidate) =>
+  !candidate
+  || candidate.modelFileName !== runtime.modelFileName
+  || candidate.modelSource !== runtime.modelSource
+  || candidate.modelSizeBytes !== runtime.modelSizeBytes
+  || candidate.modelSha256.toUpperCase() !== runtime.modelSha256.toUpperCase())) {
+  throw new Error('Android and iOS use different model assets; prepare each platform explicitly before packaging')
+}
 const modelsDirectory = path.join(repositoryRoot, 'desktop', 'resources', 'models')
 const modelPath = path.join(modelsDirectory, runtime.modelFileName)
 const temporaryPath = `${modelPath}.part`

@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
 const appCssPath = new URL('../app/src/App.css', import.meta.url)
+const appPath = new URL('../app/src/App.tsx', import.meta.url)
 const shellPath = new URL('../app/src/memoir/ui/MemoirShell.tsx', import.meta.url)
 const settingsPath = new URL('../app/src/memoir/ui/SettingsScreen.tsx', import.meta.url)
 const shareDialogPath = new URL('../app/src/memoir/ui/ShareExportDialog.tsx', import.meta.url)
@@ -44,6 +45,13 @@ test('wireframe-backed settings and share surfaces are reachable and functional'
   assert.match(shareDialog, /Save as PDF/)
   assert.match(shareDialog, /Export portable \.memoir/)
   assert.match(shareDialog, /Rendering 4:5 slides/)
+})
+
+test('replacing or closing unsaved work is confirmation-gated', async () => {
+  const app = await readFile(appPath, 'utf8')
+  assert.match(app, /window\.addEventListener\('beforeunload', guardUnload\)/)
+  assert.match(app, /Discard unsaved changes and open this memoir\?/)
+  assert.match(app, /Discard unsaved changes and start a new memoir\?/)
 })
 
 test('mobile editor actions remain in document flow while desktop sidebar is sticky', async () => {

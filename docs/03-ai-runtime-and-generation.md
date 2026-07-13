@@ -1,114 +1,41 @@
-# AI Runtime and Generation: Current Prototype
+# AI Runtime and Generation
 
-## Runtime Shape
+## Runtime selection
 
-The current AI path is a local HTTP server, not an in-browser model runtime and not a native mobile runtime.
+- Browser development uses the local Node API and may call local Ollama. Grounded fallback remains available there.
+- Packaged Electron uses the embedded local `llama.cpp` server and pinned desktop assets.
+- Android and iOS use the native `MemoirRuntime` Capacitor plugin. They never fall back to HTTP.
 
-`server/server.mjs` uses these defaults:
+Both compose and rewrite call `health()` and, when necessary, `prepare()` before inference. Preparation failures surface stable local errors.
 
-- port `8787`,
-- `OLLAMA_URL=http://127.0.0.1:11434`,
-- `OLLAMA_MODEL=gemma4:e2b-instruct-q4_K_M`.
+## Mobile model and photo context
 
-The browser checks `GET /api/health` and shows whether live local AI is ready, the model is missing, or fallback behavior will be used.
+Both mobile platforms pin `Qwen_Qwen3.5-0.8B-Q5_K_M.gguf` at 625,860,768 bytes and SHA-256 `1214AFEBFE07D894E550505E3DAB6E913953A3FB123EA425D7D7731962479FCA`.
 
-Packaged desktop defaults to the embedded llama runtime with:
+The model is text-only in the v1 mobile architecture:
 
-- model `Qwen_Qwen3.5-0.8B-Q5_K_M.gguf`,
-- projector `mmproj-Qwen_Qwen3.5-0.8B-f16.gguf`,
-- tier `qwen35-0.8b-q5`,
-- a context window of `8192`,
-- `max_tokens` capped at `768`,
-- and `chat_template_kwargs.enable_thinking` set to `false` so llama-server returns final JSON content instead of only Qwen reasoning content.
+1. The renderer sanitizes and stages at most the first five selected images one at a time.
+2. Android ML Kit or Apple Vision returns bounded, non-identifying labels locally.
+3. Native code deletes staged bytes and passes only labels, asset order/roles, tone, notes, and music cue to llama.
+4. Model output is parsed and schema/order validated before reaching the editor.
 
-## Implemented AI Actions
+This is photo-aware local drafting, not direct image-embedding inference.
 
-### Draft generation
+## Generation contracts
 
-The default `POST /api/generate` path returns:
+Compose returns `title`, `summary`, `quote`, ordered `sections`, and diagnostics. Every section must reference the corresponding selected asset id. Native generation uses a bounded job id and supports cancellation.
 
-- `title`,
-- `summary`,
-- `quote`,
-- `sections`,
-- and `diagnostics`.
+Rewrite accepts one bounded text field plus tone and returns `{ text }`. A first-action rewrite prepares the model just like compose.
 
-### Block rewrite
+Prompts treat user fields as quoted data and forbid invented names, dates, precise places, dialogue, or relationships. Raw model output is length-bounded, JSON-extracted, and validated.
 
-When `mode` is `rewrite-block`, the same endpoint rewrites a single caption or paragraph in the selected tone.
+## Model lifecycle
 
-## Live Model Path
+- Android copies and verifies the bundled asset into app-private storage. Nominally ready models are rehashed during `prepare()` so same-size corruption is repaired.
+- iOS verifies the bundled app resource in place and unloads the engine on backgrounding or memory warnings.
+- Both platforms reject devices below the supported RAM class.
+- Cancellation is checked before Android model loading, after loading, and during token generation; iOS checks cancellation in its production engine.
 
-When Ollama is reachable and the configured model is installed:
+## Evidence boundary
 
-- the server keeps up to 10 ordered assets in the generation request,
-- the server forwards live image payloads for the first 5 assets,
-- extracts base64 image payloads from the browser working copies,
-- sends a strict JSON asset-analysis request to build a compact day story map,
-- sends a second strict JSON request that drafts from that story map,
-- and normalizes the returned draft before it reaches the client.
-
-The prompt explicitly forbids invented names, dates, relationships, or unsupported travel details.
-
-### Story map generation
-
-The compose path now treats the uploaded photo set as one ordered day story before writing captions. Asset analysis produces:
-
-- `sequenceSummary`,
-- `narrativeThread`,
-- `dayContext`,
-- `theme`,
-- `storyArc` with `beginning`, `middle`, `turn`, and `ending`,
-- and one per-photo asset entry with `summary`, `mood`, `storyRole`, and `captionSeed`.
-
-The draft stage consumes that story map so each caption reads as the next story beat rather than as literal image description. This JSON shape is intentionally compact so future iOS and Android clients can reuse the same contract with smaller native or on-device runtimes.
-
-## Fallback Path
-
-The fallback path is part of the intended prototype experience, not an error screen.
-
-Fallback draft generation is used when:
-
-- Ollama is offline,
-- the model is not installed,
-- the model request fails,
-- the response is invalid JSON,
-- the response has no usable sections,
-- or the grounding guard rejects the output.
-
-Fallback rewrite is used when the live rewrite path is unavailable or fails.
-
-## Grounding Guard
-
-The server rejects model drafts that introduce ungrounded details. The current checks look for:
-
-- years not present in the note,
-- month or season words not present in the note,
-- and capitalized proper nouns that do not appear in the note.
-
-If those checks fail, the prototype falls back to grounded template copy rather than passing the model response through.
-
-## Tone Behavior
-
-The prototype supports four tone labels:
-
-- `romantic`
-- `playful`
-- `diary`
-- `editorial`
-
-The live prompt and fallback rewrite path both use those labels, but the result is still lightweight prototype copy rather than a fully staged editorial system.
-
-## Current Limitations
-
-- No resumable generation stages.
-- No stored generation artifacts.
-- No voice note or transcript input.
-- No layout planning stage.
-- No provenance history beyond the last returned diagnostics object.
-- Android now builds a pinned llama.cpp JNI runtime for CPU-only text drafting from ordered asset ids, tone, notes, and music cue. Native projector-backed image embedding is not connected yet; iOS native runtime work remains deferred until Mac/Xcode access.
-- Only the first 5 selected photos receive live image analysis today; later photos participate through sequence order, notes, and the compact story map.
-
-## Honest Framing
-
-This prototype proves that local drafting and local fallback can coexist behind a simple UI. It does not prove native on-device inference, production latency on phones, or release-ready AI orchestration.
+CI runs non-empty inference through the Android JNI engine on an emulator and the iOS production engine on a simulator. It also builds Android arm64 and unsigned iOS arm64 Release artifacts. Physical public-bridge generation, rewrite, cancellation, lifecycle, and performance evidence remains required by `docs/15-physical-device-acceptance.md`.

@@ -22,6 +22,7 @@ const nativeBridgeContracts = {
   RuntimeAdapter: ['health', 'prepare', 'stageAsset', 'clearStagedAssets', 'generate', 'rewrite', 'cancel'],
   ExportAdapter: ['writeMemoir', 'writeHtml', 'writePdf', 'share'],
   MemoirRuntime: ['health', 'prepare', 'stageAsset', 'clearStagedAssets', 'generateMemoir', 'rewrite', 'cancelGeneration'],
+  MemoirFiles: ['shareFile'],
 }
 
 const qwen35Q5Runtime = {

@@ -1,124 +1,46 @@
-# UX, Content, and Editor: Current Prototype
+# UX, Content, and Editor
 
-## Current UX Shape
+The seven wireframe states are represented through five primary routes plus modal/empty states.
 
-The current UI is a single-page browser flow with three main views:
+## Archive
 
-- archive,
-- compose,
-- editor.
+- Loading, empty, populated, import failure, and clear-confirmation states.
+- Create, open, import portable archive, and destructive clear actions.
+- Cards use saved memoir imagery and local-only context.
 
-It already carries the intended scrapbook tone, but it is still a prototype UI with lightweight controls and minimal state management.
+## Compose
 
-## Archive View
+- 3 to 10 photo import with remove/reorder and visible sequence.
+- Tone, note, music cue, and development-only local API controls.
+- Model preparation, staged photo analysis, generation, cancellation, retry/error, and progress status.
+- Starting/opening another memoir and closing with unsaved work are confirmation-gated.
 
-### Empty state
+## Reader and editor
 
-- headline: `Your life, romanticized.`
-- primary action: create a new memoir.
-- promise: import 3 to 10 photos, draft locally, keep the result as a long-form keepsake.
+- Long-form scrapbook reader with chapter position and previous/next navigation.
+- Direct editing for title, summary, quote, captions, and body text.
+- Section reorder and block-local rewrite.
+- Explicit save, share/export, theme, and diagnostics actions.
 
-### Saved archive state
+## Settings/profile
 
-- shows saved memoir cards,
-- uses the first photo as the card image,
-- labels memoirs with the created date,
-- and reminds the user that the archive is saved locally in the browser for this prototype.
+- Honest local runtime status and refresh.
+- Theme/layout selection.
+- Local archive count/privacy copy and destructive clear.
+- Share/export and diagnostics controls.
+- No fake account, sync, or cloud settings.
 
-## Compose View
+## Share/export
 
-The compose screen currently combines import, setup, and generation into one panel.
+- Busy, success, error, Escape/close, and focus states.
+- Browser downloads; Android/iOS app-private share-sheet files.
+- Portable `.memoir`, web memoir, 4:5 slide ZIP, diagnostics, and print/PDF-oriented HTML.
 
-### Inputs available now
+## Design system
 
-- photo picker,
-- tone buttons,
-- personal note field,
-- music cue field,
-- local AI URL field.
+Ivory/mint paper surfaces, near-black ink, editorial serif headings, restrained green accents, square controls, and hard offset shadows follow the wireframes. Mobile supports 320–448 px widths, safe areas, fixed reachable navigation, 44 px targets, and visible focus. Desktop uses a 960–1200 px content region and editorial reading width.
 
-### Current import behavior
+## Known UX limits
 
-- the browser accepts image files,
-- resizes them before generation,
-- and shows previews of the selected working copies.
-
-### Current generation feedback
-
-The status strip exposes simple text states such as:
-
-- `Sanitizing photos`,
-- `Ready to generate`,
-- `Preparing local memoir prompt`,
-- `Drafting with local AI`,
-- and `Draft ready`.
-
-This is informative enough for a prototype, but it is not a full progress system.
-
-## Editor View
-
-The editor is the heart of the current prototype.
-
-### Text that can be edited directly
-
-- memoir title,
-- memoir summary,
-- memoir quote,
-- section captions,
-- section body text.
-
-### Section actions implemented now
-
-- move section up,
-- move section down,
-- polish caption,
-- polish paragraph.
-
-### Sidebar actions implemented now
-
-- save to archive,
-- download web memoir,
-- print or save PDF.
-
-## Tone and Theme Controls
-
-### Tone presets
-
-- `romantic`
-- `playful`
-- `diary`
-- `editorial`
-
-### Theme presets
-
-- `noir-journal`
-- `soft-archive`
-- `film-notes`
-
-These settings affect draft generation labels and presentation, but they are still lightweight prototype controls rather than a deeply modeled design system.
-
-## Diagnostics in the UI
-
-The prototype already surfaces a small amount of useful honesty:
-
-- health status from the local AI server,
-- current stage label,
-- backend source,
-- selected model,
-- and the reason attached to the returned draft.
-
-That makes it clear whether the user is seeing live local AI output or fallback copy.
-
-## Important UX Limits
-
-- No voice note input.
-- No undo or redo.
-- No delete or duplicate block action.
-- No per-block provenance badge.
-- No autosave to durable storage beyond the explicit IndexedDB save action.
-- No true mobile-optimized editor validation yet.
-- No dedicated export preview step.
-
-## Honest UX Framing
-
-The current prototype should be described as an editable memoir demo with local draft generation, not as a finished editorial studio. Its strongest user-facing value today is that the draft remains easy to inspect, rewrite, and export in one session.
+- No undo/redo, revision compare, voice note, block duplicate/delete, or autosaved encrypted draft vault.
+- System share/print destinations and interruption behavior remain physical-device acceptance items.

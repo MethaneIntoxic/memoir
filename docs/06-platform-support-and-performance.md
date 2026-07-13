@@ -1,78 +1,40 @@
-# Platform Support and Performance: Current Prototype
+# Platform Support and Performance
 
-## Support Statement
+## Evidence-based support statement
 
-Memoir currently supports developer-run prototype use, not consumer release use.
+| Platform | Implemented | Automated evidence | Remaining release gate |
+|---|---|---|---|
+| Browser development | Shared UI, archive, local HTTP generation/fallback, editing, export | Unit tests, production build, lint, Playwright QA | Broader browser matrix if publicly supported |
+| Windows desktop | Electron shell, embedded llama runtime, portable EXE | Packaged layout, single-file, and real-model quality smokes | Code signing and clean-machine release acceptance |
+| Android | Capacitor app, arm64 JNI llama inference, ML Kit photo context, verified private model | arm64 APK build/inspection and x86_64 emulator inference | Supported arm64 phone, offline public flow, performance/thermal, signed release |
+| iOS | Capacitor app, Swift llama inference, Vision photo context, protected model/data | Simulator inference and unsigned arm64 Release build | Signed supported iPhone, offline public flow, performance/thermal, Xcode 26 archive/TestFlight |
 
-### Supported path
+Memoir is not “mobile release ready” until the physical gates in `docs/15-physical-device-acceptance.md` are recorded.
 
-- A modern desktop browser.
-- The local Node server running on the same machine.
-- Optional Ollama running on that same machine for live AI responses.
+## Mobile constraints
 
-### Best current reference path
+- Android and iOS require an arm64 device in the 8 GB RAM class. Runtime preparation fails clearly on lower-memory devices.
+- The bundled model is 625,860,768 bytes. Android also needs free app storage for its verified private copy; the device runner requires at least 2,000,000 KiB free under `/data` before installation/testing.
+- Android production/debug packaging is arm64-only. x86_64 exists only behind the exact emulator-smoke Gradle property and cannot be used for a Release task.
+- The first five sanitized photos receive on-device classifier labels. All selected photos remain ordered in the story contract.
+- Native generation is CPU-only. Simulator/emulator timings are not representative of phone latency, thermals, or memory pressure.
 
-- Chromium-based desktop browser.
-- Same-machine local server at `http://localhost:8787`.
-- Vite dev server proxying `/api` during local development.
+## Client processing
 
-### Experimental path
+- 3 to 10 photos per memoir.
+- Mobile working copies are resized to a 960 px longest side and JPEG quality 0.68.
+- Individual native staged images and decoded pixel counts are bounded before classification.
+- Raw photo bytes are deleted from the native staging cache after labeling and are not inserted into the llama prompt.
 
-- Another browser on the same local network, when the operator manually points the Local AI URL at a reachable server.
+## Storage and export
 
-### Not supported today
+- The archive is IndexedDB in the active browser/WebView profile. Clearing app/site data removes it.
+- Portable `.memoir` and HTML exports are deterministic and schema-validated.
+- PDF still uses a browser print-oriented path, and mobile file/share behavior requires physical-device verification.
+- Exported files are outside the app-private privacy boundary.
 
-- native iOS or Android installs,
-- App Store or Play Store upload artifacts,
-- background execution or resume guarantees,
-- broad device compatibility claims,
-- or end-user deployment without developer setup.
+## Performance claims allowed today
 
-## Current Performance Reality
-
-The prototype performance profile depends more on browser memory and local model responsiveness than on a tuned mobile runtime.
-
-### Client-side processing
-
-- The browser accepts up to 10 selected photos.
-- Each image is resized so its longest side is at most `1280` pixels.
-- Each image is re-encoded as JPEG with quality `0.78`.
-
-### Server-side generation
-
-- The live model path currently forwards at most the first 5 assets for live image analysis.
-- All selected assets still participate through sequence order and the story-map contract.
-- Draft quality and latency depend on the local model, machine, and Ollama health.
-- The fallback path is usually faster, but it is intentionally simpler.
-
-### Archive and export
-
-- Saved memoirs depend on browser IndexedDB capacity.
-- Large image-heavy memoirs can stress browser memory.
-- PDF output depends on the browser print engine rather than a dedicated renderer.
-
-## Current Limits That Matter
-
-- No tested mobile support matrix.
-- No native shell performance data.
-- No resumable generation after a browser refresh.
-- No benchmarked memory ceiling for longer sessions.
-- Only the first 5 selected photos receive live image analysis today.
-
-## Honest Performance Framing
-
-The correct way to describe performance today is:
-
-- quick enough for prototype review on a desktop-class development machine,
-- variable when live Ollama generation is enabled,
-- and not yet validated for mobile release readiness.
-
-## Before Making Broader Support Claims
-
-The following work must happen first:
-
-- define a real support matrix,
-- test actual mobile packaging paths,
-- move beyond browser IndexedDB as the only saved-archive layer,
-- benchmark live generation on target hardware,
-- and replace the print-based PDF path with a dedicated export pipeline.
+- Real local generation works in packaged Windows, Android emulator, and iOS Simulator evidence paths.
+- Android arm64 and iOS arm64 Release binaries compile with the pinned model/runtime.
+- No claim is made yet for phone latency, supported-device breadth, thermal sustainability, peak memory, or background-resume completion.

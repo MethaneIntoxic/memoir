@@ -1,6 +1,6 @@
 # Native Bridge Contracts
 
-The React app talks to native features through small adapters. Native iOS and Android code can change internally as long as these contracts stay stable.
+The React renderer owns product behavior; native code owns platform storage, photo access, export/share, and local inference. Platform implementations may change internally while these contracts remain stable.
 
 ## StorageAdapter
 
@@ -10,29 +10,34 @@ The React app talks to native features through small adapters. Native iOS and An
 - `delete(id: string): Promise<void>`
 - `clear(): Promise<void>`
 
-Storage must live in app-private storage. Future encryption must use platform key stores.
+Current shared archive persistence uses IndexedDB inside each shell. Future native storage must remain app-private and use platform key stores for encryption keys.
 
 ## PhotoAdapter
 
 - `pick(options): Promise<Asset[]>`
 - `sanitize(input): Promise<Asset>`
 
-Native adapters should return the same sanitized `Asset` shape as the browser path: `id`, `name`, `dataUrl`, `width`, `height`.
+The renderer currently sanitizes selected images to the shared `Asset` shape: `id`, `name`, `dataUrl`, `width`, and `height`. Native runtime staging accepts only bounded JPEG, PNG, or WebP data URLs.
 
-## RuntimeAdapter
+## LocalRuntimeAdapter
 
 - `health(): Promise<RuntimeHealth>`
+- `prepare(): Promise<RuntimeHealth>`
+- `stageAsset({ assetId, dataUrl }): Promise<void>`
+- `clearStagedAssets(): Promise<void>`
 - `generate(input): Promise<GenerateMemoirPayload>`
 - `rewrite(input): Promise<{ text: string }>`
 - `cancel(jobId: string): Promise<void>`
 
-Adapters must prefer on-device runtime. If unavailable, they must report fallback readiness rather than silently using hosted AI.
+The Capacitor plugin exposes the corresponding methods as `health`, `prepare`, `stageAsset`, `clearStagedAssets`, `generateMemoir`, `rewrite`, and `cancelGeneration`.
+
+Mobile is fail-closed. If preparation fails, the adapter returns or throws a stable `native-ai-*` error and never sends memoir data to a hosted or LAN endpoint. Both compose and first-action rewrite must run the health/prepare gate.
 
 ## ExportAdapter
 
-- `writeMemoir(memoir: Memoir): Promise<FileHandle>`
-- `writeHtml(memoir: Memoir): Promise<FileHandle>`
-- `writePdf(memoir: Memoir): Promise<FileHandle>`
-- `share(file: FileHandle): Promise<void>`
+- `writeMemoir(memoir): Promise<FileHandle>`
+- `writeHtml(memoir): Promise<FileHandle>`
+- `writePdf(memoir): Promise<FileHandle>`
+- `share(file): Promise<void>`
 
-`writeMemoir` must use the portable `.memoir` archive format from `packages/memoir-core`.
+Portable archives must use the format in `packages/memoir-core`. Browser downloads and Android/iOS app-private share-sheet files are implemented for `.memoir`, HTML, slide ZIPs, and diagnostics. The native print/PDF action shares deterministic HTML into the system sheet; actual “Save as PDF” availability and every share destination remain physical-device acceptance items.

@@ -5,5 +5,6 @@ final class MemoirBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
         bridge?.registerPluginInstance(MemoirRuntimePlugin())
+        bridge?.registerPluginInstance(MemoirFilesPlugin())
     }
 }

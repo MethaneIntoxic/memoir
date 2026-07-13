@@ -124,10 +124,27 @@ function App() {
     () => new Map((draft?.assets || []).map((asset) => [asset.id, asset])),
     [draft],
   )
+  const savedDraft = useMemo(
+    () => (draft ? memoirs.find((memoir) => memoir.id === draft.id) || null : null),
+    [draft, memoirs],
+  )
+  const hasUnsavedDraft = draft !== null && (!savedDraft || draft.updatedAt !== savedDraft.updatedAt)
+  const hasUnsavedCompose = draft === null
+    && (assets.length > 0 || notes.trim().length > 0 || musicCue.trim().length > 0)
 
   useEffect(() => {
     writeApiBase(resolvedApiBase)
   }, [resolvedApiBase])
+
+  useEffect(() => {
+    if (!hasUnsavedDraft && !hasUnsavedCompose) return
+    const guardUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', guardUnload)
+    return () => window.removeEventListener('beforeunload', guardUnload)
+  }, [hasUnsavedCompose, hasUnsavedDraft])
 
   useEffect(() => {
     let cancelled = false
@@ -347,6 +364,10 @@ function App() {
   }
 
   function openMemoir(memoir: Memoir) {
+    if ((hasUnsavedCompose || (hasUnsavedDraft && draft?.id !== memoir.id))
+        && !window.confirm('Discard unsaved changes and open this memoir?')) {
+      return
+    }
     if (isGenerating) {
       cancelGeneration()
     }
@@ -368,6 +389,10 @@ function App() {
   }
 
   function startNewMemoir() {
+    if ((hasUnsavedCompose || hasUnsavedDraft)
+        && !window.confirm('Discard unsaved changes and start a new memoir?')) {
+      return
+    }
     if (isGenerating) {
       cancelGeneration()
     }
@@ -471,16 +496,16 @@ function App() {
     }
   }
 
-  function exportHtml() {
+  async function exportHtml() {
     if (draft) {
-      exportMemoirHtml(draft)
+      await exportMemoirHtml(draft)
       setStage('Web memoir exported')
     }
   }
 
-  function exportPortable() {
+  async function exportPortable() {
     if (draft) {
-      exportPortableMemoir(draft)
+      await exportPortableMemoir(draft)
       setStage('Portable memoir exported')
     }
   }
@@ -499,10 +524,10 @@ function App() {
     }
   }
 
-  function printPdf() {
+  async function printPdf() {
     if (draft) {
-      openMemoirPrintPreview(draft)
-      setStage('Print preview opened')
+      const opened = await openMemoirPrintPreview(draft)
+      setStage(opened ? 'Print or share opened' : 'Print preview was blocked')
     }
   }
 
@@ -519,9 +544,9 @@ function App() {
     setHealthRefresh((current) => current + 1)
   }
 
-  function downloadDiagnostics() {
+  async function downloadDiagnostics() {
     if (draft) {
-      exportMemoirDiagnostics(draft)
+      await exportMemoirDiagnostics(draft)
       setStage('Diagnostics exported')
     }
   }

@@ -1,135 +1,46 @@
-# Implemented System Architecture
+# System Architecture
 
-## Active Runtime Path
+## Shared product layer
 
-The current runtime path is simple and explicit:
+- `app/src/App.tsx` coordinates archive, compose, reader, editor, settings, runtime status, and export flows.
+- `app/src/memoir/` owns sanitization, generation orchestration, document editing, persistence, validation, and export rendering.
+- `app/src/platform/` selects local HTTP versus native runtime and browser download versus native share behavior.
+- `packages/memoir-core` owns the versioned memoir schema, portable archive, deterministic HTML, slides, and platform contracts.
 
-- `app/src/App.tsx` holds the client-side flow.
-- `server/server.mjs` is the default local API started by the root scripts.
-- `tests/server-fallback.test.mjs` is the one shipped automated validation path.
+## Delivery shells
 
-There are other folders in the repo for future work, but the prototype behavior today is driven almost entirely by those files.
+### Browser development
 
-## Major Pieces
+`server/server.mjs` serves the local API and may use local Ollama. It provides grounded fallback drafting when the development model path is unavailable.
 
-### Browser client
+### Windows desktop
 
-The browser client is responsible for:
+Electron starts the local server inside the packaged process boundary and prefers the embedded llama runtime/model manifest. The portable artifact bundles the renderer, runtime, and verified model assets.
 
-- photo import,
-- image resizing and JPEG re-encoding,
-- input state for tone, note, music cue, and API URL,
-- editable memoir state,
-- browser archive persistence,
-- and export actions.
+### Android
 
-### Local server
+Capacitor hosts the shared renderer. `MemoirRuntimePlugin` owns app-private model staging, ML Kit photo labels, JNI inference, cancellation, and health/preparation state. `MemoirFilesPlugin` writes bounded app-private exports and opens the Android share sheet.
 
-The local server is responsible for:
+### iOS
 
-- reporting Ollama health,
-- generating a memoir draft,
-- rewriting a single caption or paragraph,
-- normalizing model output,
-- and falling back to grounded template copy when the live model path fails.
+Capacitor hosts the shared renderer. `MemoirRuntimePlugin` owns model verification, Vision labels, Swift llama inference, cancellation, and lifecycle unload. `MemoirFilesPlugin` writes protected temporary exports and opens `UIActivityViewController`.
 
-### Test surface
+## Data flow
 
-The current automated test checks that fallback draft generation behaves predictably and that grounding guards push unsafe model output back to the fallback path.
+1. The renderer sanitizes and orders 3 to 10 images.
+2. Browser/Electron sends the bounded request to the local API; mobile stages up to five images into the native classifier bridge.
+3. Local analysis produces a compact ordered story context.
+4. The selected local runtime returns schema-shaped memoir JSON.
+5. The renderer validates exact section/asset order and opens the editable reader/editor.
+6. Explicit save writes the memoir and sanitized image data to IndexedDB.
+7. Export renders the current edited state into portable, HTML, slide ZIP, diagnostic, or print-oriented output.
 
-## Current Data Model
+## Persistence and schemas
 
-The client keeps a lightweight memoir object in browser state and persists saved memoirs into IndexedDB.
+Memoir data includes ids/timestamps, title/summary/quote, tone/theme, notes/music cue, sanitized assets, ordered sections, and diagnostics. The versioned validators live in `packages/memoir-core` and `app/src/memoir/validation.ts`.
 
-### Asset shape
+The active archive is IndexedDB in the browser/WebView profile. There is no account, server database, cloud sync, or encrypted vault. Portable `.memoir` files provide explicit transfer/backup.
 
-- `id`
-- `name`
-- `dataUrl`
-- `width`
-- `height`
+## Verification surface
 
-### Section shape
-
-- `id`
-- `assetId`
-- `caption`
-- `body`
-
-### Memoir shape
-
-- `id`
-- `createdAt`
-- `updatedAt`
-- `title`
-- `summary`
-- `quote`
-- `tone`
-- `theme`
-- `notes`
-- `musicCue`
-- `assets`
-- `sections`
-- `diagnostics`
-
-This is UI-managed data, not a shared versioned schema package.
-
-## Current Data Flow
-
-1. The user selects image files in the browser.
-2. The client draws each image to a canvas, rescales it, and re-encodes it to JPEG.
-3. The client starts a generation job with `POST /api/generation-jobs` and polls `GET /api/generation-jobs/:jobId`.
-4. The server either runs staged Ollama analysis plus drafting or returns fallback draft content.
-5. The client places the returned draft into editable React state.
-6. The user edits and optionally rewrites individual sections.
-7. The client saves the current memoir into browser IndexedDB.
-8. The export actions render the current memoir into HTML or open the print flow.
-
-## Storage Model
-
-### What is persisted
-
-- memoir text,
-- working image data URLs,
-- timestamps,
-- and runtime diagnostics associated with each saved memoir.
-
-### Where it is persisted
-
-- browser IndexedDB for saved memoirs, with legacy migration from `localStorage` keys.
-
-### What is not present
-
-- database layer,
-- encrypted media vault,
-- migration system,
-- or server-side persistence.
-
-## Current API Surface
-
-### `GET /api/health`
-
-Returns whether Ollama is reachable, which model is expected, and whether that model is installed.
-
-### `POST /api/generation-jobs`
-
-Starts a staged compose generation job for memoir drafting.
-
-### `GET /api/generation-jobs/:jobId`
-
-Returns the current generation job state, stage progress, and final draft result when complete.
-
-### `POST /api/generate`
-
-Handles two modes:
-
-- draft generation when no mode is supplied,
-- block rewrite when `mode` is `rewrite-block`.
-
-## Important Architectural Limits
-
-- There is no background job system.
-- There is no resume-after-refresh flow.
-- There is no multi-user or account boundary.
-- The browser client directly owns most state and rendering logic.
-- `server/index.js` exists in the repo, but the default run path is `server/server.mjs`.
+Root tests cover server, schema, renderer, UI, native contract, export, and packaging behavior. Native CI builds Android/iOS artifacts and executes bounded production-engine inference on emulator/simulator. Desktop smokes execute the packaged embedded model. Physical mobile gates are defined separately.

@@ -1,36 +1,27 @@
 # Cross-Platform Release Architecture
 
-Memoir now has a shared release direction:
+- React/Vite owns the shared user interface.
+- `packages/memoir-core` owns schemas, deterministic HTML, portable `.memoir` archives, slide export, release artifact metadata, and bridge names.
+- Electron owns the Windows window/process boundary and embedded local server/runtime.
+- Capacitor owns the Android and iOS WebView shells.
+- Native platform code owns local inference, photo classification, app-private model handling, lifecycle, and eventual native file/share integration.
 
-- React/Vite remains the shared UI shell.
-- `packages/memoir-core` owns schema, export rendering, portable `.memoir` archives, release artifact contracts, and bridge names.
-- Electron remains the Windows desktop shell.
-- Capacitor is the first iOS/Android shell.
-- Native iOS/Android layers own storage, photo import, sharing, export, and local runtime bridges.
+## Artifacts
 
-## Portable Memoir File
+- Windows primary: `desktop/dist/Memoir-0.1.0-portable.exe` from `npm run dist:desktop:single-file`.
+- Android development: arm64 debug APK verified by `mobile/scripts/verify-android-apk.mjs`.
+- Android distribution: signed arm64 Release APK; unsigned or debug APKs are not public release artifacts.
+- iOS preflight: unsigned arm64 Release app built for generic iOS.
+- iOS distribution: signed Xcode archive uploaded to App Store Connect; an ad hoc `.ipa` is not the primary store artifact.
 
-The `.memoir` file is a ZIP archive with:
+## Portable memoir
 
-- `manifest.json`,
-- `memoir.json`,
-- `diagnostics.json`,
-- `export.json`,
-- `exports/memoir.html`,
-- and sanitized image assets under `assets/`.
+The `.memoir` ZIP contains `manifest.json`, `memoir.json`, diagnostics/export metadata, deterministic HTML, and sanitized assets. Import enforces entry, path, MIME, size, pixel, string, and schema limits. It is portable backup/transfer data, not encrypted storage.
 
-The archive is intended for app-to-app transfer, backup, and future hosted import. It is not encrypted yet.
+## Runtime assets
 
-## Release Artifacts
+Android and iOS use `mobile/runtime-manifest.json`. Android copies the exact model into the APK and then app-private storage. iOS bundles the same model as a protected app resource. Executable runtime code is shipped with the reviewed app.
 
-- Windows: `npm run dist:desktop:single-file` for the primary one-file portable EXE.
-- Windows diagnostic: `npm run dist:desktop` for a ZIP plus `win-unpacked` staging target.
-- Windows single-file model tier: Qwen3.5 0.8B Q5_K_M plus the f16 mmproj is the default portable payload. The 2.5 GB hard shipping gate applies to the portable EXE; Qwen3-VL tiers remain optional larger fallback builds.
-- Android: signed direct-install `.apk` from the Capacitor Android project, with Qwen model assets copied from local desktop model resources at build time.
-- iOS: source/config stay ready for Capacitor, but final Xcode archive is deferred until macOS/Xcode access exists; `.ipa` is only for ad hoc/internal distribution.
+## Readiness model
 
-## Store Policy Notes
-
-- iOS must not download executable code that changes app functionality after review.
-- Android v1 uses a direct sideload `.apk`; users may need to allow installs from outside the Play Store.
-- Mobile model assets use `mobile/runtime-manifest.json`; Android direct APK builds use generated APK assets and iOS archive work is deferred.
+Source readiness means projects, contracts, tests, and unsigned builds exist. Release readiness additionally requires fresh signed artifacts, physical-device acceptance, platform privacy/compliance metadata, and distribution-channel validation. `npm run release:readiness` reports these separately.

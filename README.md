@@ -1,145 +1,99 @@
-# Memoir Prototype
+# Memoir
 
-Memoir is a browser-based prototype for turning 3 to 10 photos into an editable scrapbook-style draft using a local Node server and, when available, a live local model runtime.
+Memoir is a private, local-first scrapbook app that turns 3 to 10 photos into an editable memoir. One React interface ships through a browser development path, a packaged Electron desktop app, and native Capacitor projects for Android and iOS.
 
-The current repository is not a packaged mobile app and not a hardened private-by-default release. It is a local prototype that proves the flow from photo import to editable memoir draft, browser-local archive, HTML export, and print-to-PDF.
+## Current implementation
 
-## Current Scope
+- Shared React 19/Vite UI for archive, photo ordering, compose, reader, editor, settings, and share/export.
+- Browser development server with local Ollama support and a grounded fallback.
+- Windows portable Electron build with an embedded `llama.cpp` runtime and pinned Qwen model.
+- Android app with real JNI `llama.cpp` inference, bundled ML Kit photo labels, app-private verified model staging, and no network permissions in the final APK.
+- iOS app with real Swift/`llama.cpp` inference, Apple Vision photo labels, protected local data, and a bundled verified model.
+- Portable `.memoir`, HTML, Instagram-slide ZIP, diagnostics, and print/PDF-oriented exports.
+- IndexedDB archive shared by the browser, Electron renderer, and native WebViews.
 
-- React and Vite browser client in `app/`.
-- Local Node HTTP server in `server/server.mjs` with `GET /api/health`, `POST /api/generate`, `POST /api/generation-jobs`, and `GET /api/generation-jobs/:jobId`.
-- Runtime abstraction in `server/runtime/` that supports the existing Ollama path and an embedded `llama.cpp`-style packaged runtime path.
-- Optional live drafting and rewrite via local Ollama using `gemma4:e2b-instruct-q4_K_M` by default, plus a bundled desktop-model manifest targeting the Qwen3.5 0.8B Q5_K_M single-file release tier.
-- Grounded fallback draft and rewrite responses when Ollama is offline, missing the model, or returns unusable output.
-- Browser-local archive stored in IndexedDB with migration from older `localStorage` keys.
-- HTML export download and browser print flow for PDF saving.
-- Desktop shell scaffold in `desktop/` for packaging the built app with a local bundled runtime.
-- Shared release core in `packages/memoir-core` for schema validation, portable `.memoir` archives, deterministic HTML export, and platform artifact contracts.
-- Capacitor mobile shell scaffold in `mobile/` for the first iOS and Android wrapper track.
-- One shipped automated test covering the fallback draft contract in `tests/server-fallback.test.mjs`.
+Mobile inference is fail-closed: Android and iOS never fall back to the configurable HTTP runtime. Emulator and simulator inference are proven in CI. Physical ARM device performance, signing, and store processing remain explicit release gates; see [physical-device acceptance](docs/15-physical-device-acceptance.md).
 
-## What This Prototype Does Not Claim
+## Quick validation
 
-- No encrypted storage at rest.
-- No native iOS or Android packaging.
-- No shipped bundled runtime binary or GGUF asset in the repository yet.
-- No account system, sync, or cloud backup.
-- No production support for mobile browsers.
-- No release-grade privacy guarantees beyond the local machine and browser session you control.
+From the repository root:
 
-## Local Run Guide
-
-### Prerequisites
-
-- A recent Node.js release that can run Vite 8 and the built-in `fetch` API. Current Node LTS is the safest choice.
-- `npm`.
-- Optional: Ollama installed locally if you want live model responses instead of fallback draft text.
-
-### Install
-
-The root package has only scripts. The actual web dependencies live under `app/`.
-
-```bash
-cd memoir/app
-npm install
+```powershell
+npm run smoke
+npm run release:readiness
 ```
 
-If you want the desktop shell scaffold, install its separate development dependencies:
+`npm run smoke` runs repository tests, client tests, the production web build, and lint. `release:readiness` distinguishes source readiness from signed/hardware release readiness.
 
-```bash
-cd memoir/desktop
-npm install
-```
+## Browser development
 
-### Start the prototype
-
-Start the browser prototype from the repo root:
-
-```bash
-cd memoir
+```powershell
+npm install --prefix app
 npm run dev:app
 ```
 
-This command starts the local server when one is not already healthy on port `8787`, then starts Vite. Open the Vite URL shown in the terminal. The client proxies `/api` to `http://localhost:8787` during development, so the default Local AI URL in the UI can stay as `/api`.
+The browser path uses the local server at `http://127.0.0.1:8787`. Ollama is optional; browser development may use grounded fallback output when the local model server is unavailable.
 
-For split-terminal debugging, `npm run dev:server` starts only the local API server and `npm run dev:vite` starts only Vite.
+## Windows desktop
 
-### Optional live AI setup
-
-If Ollama is installed, pull the default model used by the prototype:
-
-```bash
-ollama pull gemma4:e2b-instruct-q4_K_M
+```powershell
+npm install --prefix desktop
+npm run prepare:desktop-model
+npm run dist:desktop:single-file
+npm run smoke:desktop-single-file
+npm run smoke:desktop-quality
 ```
 
-The server will use these defaults unless you override them with environment variables:
+The primary artifact is `desktop/dist/Memoir-0.1.0-portable.exe`. It must remain below the 2.5 GB packaging gate and should be signed before public distribution.
 
-- `MEMOIR_PORT=8787`
-- `OLLAMA_URL=http://127.0.0.1:11434`
-- `OLLAMA_MODEL=gemma4:e2b-instruct-q4_K_M`
+## Android
 
-If Ollama is unavailable or the model is not installed, the UI still works and the server returns grounded fallback copy instead of a live model response.
+```powershell
+npm install --prefix mobile
+npm --prefix mobile run prepare:model
+npm --prefix mobile run bootstrap:android -- -AcceptAndroidSdkLicenses
+npm --prefix mobile run build:android:debug
+```
 
-### Desktop scaffold
+The debug APK is `mobile/android/app/build/outputs/apk/debug/app-debug.apk`. The build automatically verifies package id, signature, ABI, model allowlist, static C++ runtime packaging, and absence of mobile network permissions.
 
-The repository now includes a desktop shell scaffold under `desktop/`.
+For a supported physical phone already placed in Airplane Mode:
 
-- `npm run dev:desktop` builds the renderer and launches the Electron shell.
-- `npm run prepare:desktop-model` downloads and verifies the selected packaged model tier. The default tier is `qwen35-0.8b-q5`; use `-- --tier qwen3vl-q4` only when testing the larger fallback tier.
-- `npm run dist:desktop` builds the diagnostic Windows ZIP and unpacked smoke target.
-- `npm run dist:desktop:single-file` builds the primary one-file Windows portable EXE at `desktop/dist/Memoir-0.1.0-portable.exe`.
-- The desktop shell starts the local Memoir server automatically.
-- In packaged mode, the server is prepared to prefer bundled embedded-runtime assets over Ollama.
+```powershell
+npm --prefix mobile run smoke:android:device
+```
 
-The one-file Windows release uses `Qwen_Qwen3.5-0.8B-Q5_K_M.gguf` plus `mmproj-Qwen_Qwen3.5-0.8B-f16.gguf` by default. The hard shipping gate is 2.5 GB; the Qwen3.5 Q5 tier is kept well below that while preserving vision input support.
+The runner refuses emulators and unsupported devices and does not change connectivity settings.
 
-## Current User Flow
+## iOS
 
-1. Import 3 to 10 photos in the browser.
-2. The browser re-encodes them to resized JPEG working copies before sending them to the local server.
-3. Add an optional note and music cue.
-4. Generate a draft memoir through the local server.
-5. Edit title, summary, quote, captions, and body copy in the browser.
-6. Save the memoir into the browser-local archive.
-7. Export an HTML file or use the browser print dialog to save a PDF.
+The committed Xcode project is under `mobile/ios/App`. A macOS host with Xcode is required:
 
-## Support Statement
+```bash
+npm ci --prefix app
+npm ci --prefix mobile
+npm --prefix mobile run prepare:model
+npm --prefix mobile run cap:sync
+xcodebuild -project mobile/ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
+```
 
-Memoir currently supports local prototype use on a developer-controlled machine running the browser client and the local server together.
+CI builds both a simulator inference smoke and an unsigned arm64 Release app. A signed physical-iPhone run and App Store archive still require an Apple Developer team, signing assets, Xcode 26+, and a supported iPhone.
 
-Supported for this prototype:
+## Privacy and storage boundary
 
-- Desktop-class Chromium browsers with the local server running on the same machine.
-- LAN testing from another browser when the server is reachable and CORS/network settings are under your control.
+- Photo labeling and text generation run locally.
+- Raw photo bytes are not placed into the text-model prompt.
+- Mobile model files and temporary assets live in app-private storage; iOS data is excluded from backup and protected where supported.
+- Android’s merged APK has neither `INTERNET` nor `ACCESS_NETWORK_STATE`.
+- Saved memoirs are still WebView/IndexedDB data, not an encrypted vault or cloud backup.
+- Exported files leave the app-private boundary and should be handled accordingly.
 
-Not supported as a release promise:
+## Documents
 
-- Native mobile installs are scaffolded but not yet store-built.
-- Offline packaged app distribution is smoke-tested locally through the portable EXE path but not yet signed release-ready.
-- End-user desktop setup is available through the packaged app artifacts; mobile store artifacts still need native project generation and signing.
-- Strong privacy or retention guarantees across browser resets, shared machines, or device compromise.
-
-## Current Limitations
-
-- Archive data is stored in browser IndexedDB, so clearing site data still removes saved memoirs.
-- Imported photos are reduced and re-encoded for the prototype, but this is not a formal encrypted media vault or forensic-grade metadata pipeline.
-- The server can fall back to template-like copy when Ollama is unavailable.
-- The embedded-runtime desktop path depends on large local assets under `desktop/resources`; the single-file release must stay under the portable EXE size gate.
-- The rewrite action is block-local only and does not maintain revision history.
-- PDF output relies on the browser print path rather than a dedicated PDF renderer.
-- Diagnostics shown in the UI are basic runtime labels, not a full support bundle.
-
-## Document Map
-
-- `docs/00-supreme-blueprint.md`: top-level truth statement for the current prototype and the phase 0 to 9 framing.
-- `docs/01-product-spec.md`: current prototype goals, user flow, and non-goals.
-- `docs/02-system-architecture.md`: implemented browser client, local server, data flow, and storage model.
-- `docs/03-ai-runtime-and-generation.md`: Ollama integration, fallback behavior, and generation constraints.
-- `docs/04-security-and-privacy.md`: current privacy boundary and what is not yet implemented.
-- `docs/05-ux-content-and-editor.md`: current screens, editing affordances, and UX limits.
-- `docs/06-platform-support-and-performance.md`: support statement and realistic prototype platform expectations.
-- `docs/07-testing-and-release.md`: current validation depth and release framing.
-- `docs/13-single-file-windows-portable-exe.md`: Windows portable EXE model tier, packaging, and smoke-gate plan.
-- `docs/14-consolidation-audit.md`: canonical root and safe hash-audited consolidation workflow.
-- `docs/08-delivery-roadmap-and-backlog.md`: grounded interpretation of prototype phases 0 to 9 and the next work after them.
-- `docs/09-risk-register.md`: current prototype risks and release blockers.
+- [Release architecture blueprint](docs/ARCH_BLUEPRINT.md)
+- [Platform support](docs/06-platform-support-and-performance.md)
+- [Testing and release](docs/07-testing-and-release.md)
+- [Store release checklist](docs/12-store-release-checklist.md)
+- [Physical-device acceptance](docs/15-physical-device-acceptance.md)
+- [Native runtime strategy](native/MOBILE_RUNTIME.md)
+- [Native bridge contracts](native/BRIDGE_CONTRACTS.md)

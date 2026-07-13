@@ -11,6 +11,7 @@ private let modelBaseName = "Qwen_Qwen3.5-0.8B-Q5_K_M"
 private let modelExtension = "gguf"
 private let modelSizeBytes: Int64 = 625_860_768
 private let modelSHA256 = "1214AFEBFE07D894E550505E3DAB6E913953A3FB123EA425D7D7731962479FCA"
+private let minimumPhysicalMemoryBytes: UInt64 = 7_000_000_000
 private let allowedTones = Set(["romantic", "playful", "diary", "editorial"])
 private let maximumStagedAssets = 10
 private let maximumPhotoContextAssets = 5
@@ -116,6 +117,9 @@ public class MemoirRuntimePlugin: CAPPlugin, CAPBridgedPlugin {
         runtimeQueue.async { [weak self] in
             guard let self else { return }
             do {
+                guard ProcessInfo.processInfo.physicalMemory >= minimumPhysicalMemoryBytes else {
+                    throw self.runtimeError("native-ai-unsupported-memory", code: 9)
+                }
                 let url = try self.requireModelURL()
                 try self.verifyModel(at: url)
                 self.setState(phase: "ready", progressPct: 100, prepared: true, failureCode: "")

@@ -1,33 +1,63 @@
-# Memoir Mobile Shell
+# Memoir Mobile
 
-This folder is the Capacitor entry point for the first iOS and Android track.
+This folder contains the production Capacitor Android and iOS projects. Both reuse `../app/dist`, the shared memoir contracts, the same pinned model, and a fail-closed `MemoirRuntime` bridge.
 
-The mobile shell reuses the Vite/React app from `../app/dist` and adds native bridges for storage, photo import, export, and local runtime access. It does not own memoir business rules; shared contracts live in `../packages/memoir-core`.
-
-## Bootstrap
-
-From this folder:
+## Shared setup
 
 ```powershell
 npm install
 npm run prepare:model
 npm run cap:sync
+```
+
+`prepare:model` validates Android/iOS asset parity and verifies the pinned GGUF before use. `cap:sync` rebuilds the renderer and reapplies the pinned iOS Swift package definition.
+
+## Android
+
+```powershell
 npm run bootstrap:android -- -AcceptAndroidSdkLicenses
 npm run build:android:debug
 ```
 
-Review the Google Android SDK licenses before passing `-AcceptAndroidSdkLicenses`. The bootstrap script installs a repository-local Microsoft JDK 21, Android SDK platform 36, build-tools 35.0.0, CMake 3.22.1, and NDK 27.0.12077973; it does not silently accept licenses. iOS builds require macOS with Xcode 26 or later for App Store uploads.
+Review the SDK licenses before accepting them. Bootstrap installs a repository-local Microsoft JDK 21, Android platform 36, build-tools 35.0.0, CMake 3.22.1, and NDK 27.0.12077973.
 
-## Release Artifacts
+The debug build automatically verifies:
 
-- Android sideload release: signed `.apk` at `android/app/build/outputs/apk/release/app-release.apk`.
-- iOS store upload: Xcode archive uploaded to App Store Connect.
-- Ad hoc iOS sharing may produce `.ipa`, but `.ipa` is not the primary App Store upload path.
+- package `local.memoir.mobile`;
+- one expected ABI (`arm64-v8a` for normal builds);
+- exactly one pinned model and no projector;
+- `libmemoirllama.so` with no `libc++_shared.so`;
+- a valid APK signature;
+- no `INTERNET` or `ACCESS_NETWORK_STATE` permission in the final APK.
 
-## Runtime Rule
+Physical native inference acceptance:
 
-Do not copy arbitrary desktop GGUF files into the mobile shell. Mobile model assets are pinned by `runtime-manifest.json`; the v1 offline text-generation target is `Qwen_Qwen3.5-0.8B-Q5_K_M.gguf`.
+```powershell
+npm run smoke:android:device
+```
 
-Android stages the model from generated APK assets into private app storage with size and SHA-256 verification. iOS bundles the same pinned model as a protected app resource and links the official llama.cpp XCFramework through Swift Package Manager. Run `npm run cap:sync` before opening either native project; the sync script reapplies the pinned iOS runtime package definition.
+Connect exactly one authorized arm64 device, enable Airplane Mode, and disable Wi-Fi first. The runner refuses emulators, validates API/RAM/storage, installs the verified APK, runs native inference instrumentation, and writes evidence to `../output/android-device-acceptance`. It never changes connectivity settings.
 
-Both native bridges run CPU-only text generation on-device and expose the same fail-closed `MemoirRuntime` contract. Before generation, the shared renderer sends the first five sanitized photos one at a time to `stageAsset`. Android's bundled ML Kit labeler and Apple's Vision classifier reduce each photo to bounded, non-identifying labels on-device; raw photo bytes are never included in the llama.cpp generation request and staged context is cleared after generation or cancellation. This is photo-aware text generation, not a claim that the text model directly consumes image embeddings.
+Signed release builds require all four `MEMOIR_ANDROID_*` signing environment variables and fail closed when any is missing.
+
+## iOS
+
+Use macOS with Xcode. The project is `ios/App/App.xcodeproj`, scheme `App`. CI builds simulator inference plus an unsigned generic-iOS arm64 Release app. Signed device/archive work requires Xcode 26+, Apple Developer signing, and a supported iPhone.
+
+```bash
+xcodebuild \
+  -project ios/App/App.xcodeproj \
+  -scheme App \
+  -configuration Release \
+  -destination 'generic/platform=iOS' \
+  CODE_SIGNING_ALLOWED=NO \
+  build
+```
+
+See `../docs/15-physical-device-acceptance.md` for signing, device, offline, performance, and archive gates.
+
+## Runtime behavior
+
+The renderer stages at most five sanitized photos. ML Kit (Android) and Vision (iOS) reduce them to bounded local labels, then discard raw staged bytes. The text model receives only those labels, asset order/roles, tone, notes, and music cue. Both compose and first-action rewrite prepare the model before inference; mobile never falls back to HTTP.
+
+Portable, HTML, slide ZIP, and diagnostic exports are written into a bounded app-private temporary directory and opened through the native system share sheet. The print/PDF action shares deterministic HTML so the device can offer its available print or PDF destination; confirm that behavior during physical acceptance.

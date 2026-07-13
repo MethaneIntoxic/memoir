@@ -13,5 +13,8 @@ test('release readiness no longer gates on package:web output', async () => {
 
   assert.equal(script.includes('dist/web/memoir-web.zip'), false)
   assert.equal(script.includes('web-package-script'), false)
+  assert.equal(script.includes('const sourceReady'), true)
+  assert.equal(script.includes('const releaseReady'), true)
+  assert.equal(script.includes('physicalEvidence'), true)
   assert.equal(checklist.includes('npm run package:web'), false)
 })

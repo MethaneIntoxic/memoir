@@ -20,7 +20,7 @@ type ShareExportDialogProps = {
 }
 
 const actionLabels: Record<ShareAction, string> = {
-  pdf: 'Print preview opened',
+  pdf: 'Print or share opened',
   web: 'Web memoir exported',
   portable: 'Portable memoir exported',
   slides: '4:5 slides exported',
@@ -33,6 +33,9 @@ function friendlyExportError(error: unknown): string {
   }
   if (message.includes('canvas') || message.includes('image')) {
     return 'A photo could not be rendered for export. Re-import it and try again.'
+  }
+  if (message.startsWith('native-export-')) {
+    return 'The system share sheet could not open. Your memoir is still safe; please try again.'
   }
   return 'Export failed. Your memoir is still safe; please try again.'
 }
@@ -53,9 +56,7 @@ export function ShareExportDialog({
   useEffect(() => {
     closeButton.current?.focus()
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !busyAction) {
-        onClose()
-      }
+      if (event.key === 'Escape' && !busyAction) onClose()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
@@ -104,7 +105,7 @@ export function ShareExportDialog({
         <div className="share-options">
           <button type="button" onClick={() => void runAction('pdf', onPrintPdf)} disabled={busyAction !== null}>
             <FilePdfIcon weight="fill" aria-hidden="true" />
-            <span>{busyAction === 'pdf' ? 'Opening print preview…' : 'Save as PDF'}</span>
+            <span>{busyAction === 'pdf' ? 'Opening print or share…' : 'Print / Save as PDF'}</span>
             <DownloadSimpleIcon aria-hidden="true" />
           </button>
           <button type="button" onClick={() => void runAction('web', onExportHtml)} disabled={busyAction !== null}>

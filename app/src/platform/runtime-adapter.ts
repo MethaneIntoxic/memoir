@@ -128,6 +128,28 @@ export function getNativeRuntimeBridge(): NativeRuntimeBridge | null {
   return isNativeRuntimePlatform() ? MemoirRuntime : null
 }
 
+function readNativeReadiness(value: unknown): { available: boolean; reason: string } {
+  if (!isRecord(value)) {
+    return { available: false, reason: 'native-ai-health-invalid' }
+  }
+
+  return {
+    available: value.available === true,
+    reason: readString(value.reason) || 'native-ai-runtime-unavailable',
+  }
+}
+
+export async function ensureNativeRuntimeReady(bridge: NativeRuntimeBridge): Promise<void> {
+  let readiness = readNativeReadiness(await bridge.health())
+  if (!readiness.available) {
+    readiness = readNativeReadiness(await bridge.prepare())
+  }
+
+  if (!readiness.available) {
+    throw new Error(readiness.reason)
+  }
+}
+
 export async function readRuntimeHealth(apiBase: string): Promise<RuntimeHealth> {
   const platform = getRuntimePlatform()
   if (platform === 'android' || platform === 'ios') {
@@ -174,6 +196,7 @@ export async function rewriteWithRuntime(input: {
 }): Promise<unknown> {
   const bridge = input.bridge || getNativeRuntimeBridge()
   if (bridge) {
+    await ensureNativeRuntimeReady(bridge)
     return bridge.rewrite({
       jobId: `rewrite-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       tone: input.tone,

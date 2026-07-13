@@ -13,37 +13,14 @@ import {
   type MemoirDiagnosticsExportPayload,
   type MemoirSlide,
 } from '../../../packages/memoir-core/index.mjs'
+import { deliverBinaryFile, deliverTextFile, isNativeMobile } from '../platform/export-adapter.ts'
 
-function downloadFile(name: string, content: string, type: string) {
-  const url = URL.createObjectURL(new Blob([content], { type }))
-  const link = document.createElement('a')
-  link.href = url
-  link.download = name
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  URL.revokeObjectURL(url)
+export async function exportMemoirHtml(memoir: Memoir) {
+  await deliverTextFile(buildMemoirFileName(memoir.title, 'html'), renderMemoirHtml(memoir), 'text/html')
 }
 
-function downloadBytes(name: string, content: Uint8Array, type: string) {
-  const arrayBuffer = new ArrayBuffer(content.byteLength)
-  new Uint8Array(arrayBuffer).set(content)
-  const url = URL.createObjectURL(new Blob([arrayBuffer], { type }))
-  const link = document.createElement('a')
-  link.href = url
-  link.download = name
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  URL.revokeObjectURL(url)
-}
-
-export function exportMemoirHtml(memoir: Memoir) {
-  downloadFile(buildMemoirFileName(memoir.title, 'html'), renderMemoirHtml(memoir), 'text/html;charset=utf-8')
-}
-
-export function exportPortableMemoir(memoir: Memoir) {
-  downloadBytes(buildPortableMemoirFileName(memoir.title), buildPortableMemoirArchive(memoir), PORTABLE_MEMOIR_MIME)
+export async function exportPortableMemoir(memoir: Memoir) {
+  await deliverBinaryFile(buildPortableMemoirFileName(memoir.title), buildPortableMemoirArchive(memoir), PORTABLE_MEMOIR_MIME)
 }
 
 function loadImage(dataUrl: string): Promise<HTMLImageElement> {
@@ -166,11 +143,11 @@ async function renderInstagramSlidePng(slide: MemoirSlide): Promise<Uint8Array> 
 
 export async function exportInstagramSlides(memoir: Memoir) {
   const bytes = await exportInstagramFeedSlides(memoir, { renderSlide: renderInstagramSlidePng })
-  downloadBytes(buildMemoirFileName(memoir.title, 'instagram-slides.zip'), bytes, 'application/zip')
+  await deliverBinaryFile(buildMemoirFileName(memoir.title, 'instagram-slides.zip'), bytes, 'application/zip')
 }
 
-export function exportMemoirDiagnostics(memoir: Memoir) {
-  downloadFile(
+export async function exportMemoirDiagnostics(memoir: Memoir) {
+  await deliverTextFile(
     buildDiagnosticsFileName(memoir.title),
     renderMemoirDiagnosticsJson(memoir),
     'application/json;charset=utf-8',
@@ -182,7 +159,11 @@ export async function importPortableMemoirFile(file: File): Promise<Memoir> {
   return result.memoir
 }
 
-export function openMemoirPrintPreview(memoir: Memoir): boolean {
+export async function openMemoirPrintPreview(memoir: Memoir): Promise<boolean> {
+  if (isNativeMobile()) {
+    await deliverTextFile(buildMemoirFileName(memoir.title, 'html'), renderMemoirHtml(memoir), 'text/html')
+    return true
+  }
   const preview = window.open('', '_blank', 'noopener,noreferrer')
   if (!preview) {
     return false

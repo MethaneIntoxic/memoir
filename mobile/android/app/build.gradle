@@ -62,6 +62,7 @@ android {
     sourceSets {
         main {
             assets.srcDirs += ["$buildDir/generated/memoir-model-assets"]
+            res.srcDirs += ["$buildDir/generated/memoir-branding-res"]
         }
     }
 }
@@ -79,6 +80,19 @@ def memoirModelFiles = [
 ]
 def memoirLlamaCppCommit = "253ba110bcd372207ca7b0bb56f1ea10d60d53fd"
 def memoirLlamaCppDir = file("$buildDir/generated/llama.cpp")
+def memoirBrandIcon = file("../../../app/public/icons/memoir-icon-1024.png")
+
+tasks.register("prepareMemoirBranding", Sync) {
+    from(memoirBrandIcon) {
+        rename { "memoir_icon.png" }
+    }
+    into file("$buildDir/generated/memoir-branding-res/drawable-nodpi")
+    doFirst {
+        if (!memoirBrandIcon.isFile()) {
+            throw new GradleException("Memoir branding requires app/public/icons/memoir-icon-1024.png.")
+        }
+    }
+}
 
 tasks.register("prepareMemoirModelAssets", Sync) {
     from(memoirModelSourceDir) {
@@ -138,7 +152,7 @@ tasks.register("prepareMemoirLlamaCppSource") {
     }
 }
 
-preBuild.dependsOn("prepareMemoirModelAssets", "prepareMemoirLlamaCppSource")
+preBuild.dependsOn("prepareMemoirBranding", "prepareMemoirModelAssets", "prepareMemoirLlamaCppSource")
 
 tasks.register("verifyMemoirReleaseSigning") {
     doLast {

@@ -1,108 +1,37 @@
-# Product Spec: Current Prototype
+# Memoir Product Spec
 
-## Product Summary
+## Product summary
 
-Memoir currently demonstrates a browser-based memoir drafting flow. A user imports 3 to 10 photos, adds optional context, requests a draft from a local server, edits the result, and exports it as HTML or through the browser print dialog.
+Memoir privately turns 3 to 10 ordered photos into an editable scrapbook story using local AI. The same product flow runs in browser development, Windows desktop, Android, and iOS shells.
 
-The prototype is meant to answer a narrow question: does this scrapbook-style flow feel valuable before a native app, hardened storage model, or broader release story exists?
+## Core flow
 
-## Current Audience
+1. Open or import the local archive.
+2. Select, remove, and reorder 3 to 10 photos.
+3. Choose `romantic`, `playful`, `diary`, or `editorial` tone and add optional notes/music context.
+4. Prepare the local model when required and generate a draft.
+5. Read, edit, reorder, and rewrite story sections.
+6. Save and reopen the memoir locally.
+7. Export portable `.memoir`, HTML, print/PDF-oriented output, or Instagram slide ZIP.
 
-The current audience is internal:
+## Product contract
 
-- product and design review,
-- local prototype testers,
-- and developers validating the browser plus local server flow.
+- AI output stays editable and preserves selected photo order.
+- Diagnostics state the actual runtime/model and never label fallback as live inference.
+- Mobile AI is offline and fail-closed.
+- At most five sanitized photos are classified locally; bounded labels, not raw bytes, enter the text prompt.
+- Destructive archive clearing requires confirmation.
+- Exports reflect the current edited state and clearly leave the private app boundary.
+- Loading, preparation, generation, cancellation, empty, success, and error states remain visible and keyboard accessible.
 
-This is not yet positioned for general end users.
+## Implemented boundaries
 
-## Current Product Goals
+- Archive persistence is IndexedDB within the active app/browser profile, with migration from older local storage.
+- There is no account, sync, cloud backup, collaboration, public-link publishing, or hosted mobile inference.
+- Storage is not an encrypted media vault.
+- Mobile app-private file sharing is implemented for the export formats; destination behavior and system print/PDF still require device acceptance before public release claims.
+- Physical device support is restricted to the validated matrix; no broad phone compatibility claim is allowed before hardware evidence.
 
-- Prove the emotional shape of the memoir flow with real photos.
-- Keep AI output editable instead of final.
-- Show that the app still behaves sensibly when the model path is offline.
-- Validate that a browser UI can move from draft to export in one session.
+## Acceptance
 
-## Implemented Inputs
-
-- 3 to 10 imported photos.
-- One tone preset: `romantic`, `playful`, `diary`, or `editorial`.
-- Optional personal note.
-- Optional music cue.
-- Configurable local API base URL.
-
-## Implemented Outputs
-
-- memoir title,
-- memoir summary,
-- hero quote,
-- one caption and paragraph per section,
-- downloadable HTML export,
-- and browser print to PDF.
-
-## Current User Flow
-
-1. Open the archive view.
-2. Start a new memoir.
-3. Import 3 to 10 photos.
-4. Add an optional note and music cue.
-5. Generate a draft through the local server.
-6. Edit the title, summary, quote, captions, and body text.
-7. Save the memoir to the local browser archive.
-8. Export as HTML or print to PDF.
-
-## Current UX Contract
-
-- The draft must stay editable after generation.
-- The app must surface whether it is using live local AI or fallback copy.
-- The archive must reopen previously saved memoirs in the same browser.
-- Export must use the current edited state, not an earlier draft.
-
-## Current Non-Goals
-
-- native mobile packaging,
-- account creation,
-- collaboration,
-- sync or backup,
-- voice note capture,
-- cloud inference,
-- public link publishing,
-- secure media vault behavior,
-- or production-ready retention guarantees.
-
-## Prototype Acceptance Criteria
-
-### Create
-
-- The user can select at least 3 photos.
-- The browser produces visible working copies for the selected photos.
-
-### Generate
-
-- The app can request a memoir draft from the local API.
-- If Ollama is offline or missing the model, the app still returns fallback draft content.
-
-### Edit
-
-- The user can directly edit all visible text fields.
-- The user can move sections up and down.
-- The user can ask the server to polish a caption or paragraph.
-
-### Save and export
-
-- The user can persist a memoir into the browser archive.
-- The user can download a standalone HTML file.
-- The user can open the browser print flow for PDF output.
-
-## Known Product Gaps
-
-- No voice note flow.
-- No undo and redo.
-- No block delete or duplicate.
-- No authored-versus-generated provenance labels.
-- No revision history.
-- No packaged mobile experience.
-
-## Prototype Success Signal
-
-The current prototype is successful if testers can create a memoir, make manual edits, understand whether the AI path is live or fallback, and leave the session with an exportable artifact.
+The product implementation is accepted when the automated repository/desktop/native CI gates pass and the UI matches the source wireframes. Mobile distribution is accepted only after the separate physical and signing gates in `docs/15-physical-device-acceptance.md` pass.

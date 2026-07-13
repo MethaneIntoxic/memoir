@@ -56,6 +56,8 @@ jobs:
       - name: Build arm64 debug APK
         working-directory: mobile/android
         run: ./gradlew :app:assembleDebug
+      - name: Verify arm64 APK privacy and contents
+        run: node mobile/scripts/verify-android-apk.mjs --apk mobile/android/app/build/outputs/apk/debug/app-debug.apk --abi arm64-v8a
       - uses: actions/upload-artifact@v4
         with:
           name: memoir-android-debug
@@ -180,6 +182,28 @@ jobs:
           xcrun simctl bootstatus "$simulator_id" -b
       - name: Resolve native packages
         run: xcodebuild -resolvePackageDependencies -project mobile/ios/App/App.xcodeproj -scheme App
+      - name: Build unsigned arm64 iOS Release app
+        run: >-
+          xcodebuild
+          -project mobile/ios/App/App.xcodeproj
+          -scheme App
+          -configuration Release
+          -sdk iphoneos
+          -destination "generic/platform=iOS"
+          -derivedDataPath output/ios-device-derived
+          CODE_SIGNING_ALLOWED=NO
+          build
+      - name: Verify unsigned iOS Release architecture and model
+        run: |
+          app_path="$GITHUB_WORKSPACE/output/ios-device-derived/Build/Products/Release-iphoneos/App.app"
+          model_path="$app_path/Qwen_Qwen3.5-0.8B-Q5_K_M.gguf"
+          test -d "$app_path"
+          lipo -archs "$app_path/App" | grep -qw arm64
+          llama_binary="$(find "$GITHUB_WORKSPACE/output/ios-device-derived" -type f -path '*/llama.framework/llama' | head -n 1)"
+          test -n "$llama_binary"
+          lipo -archs "$llama_binary" | grep -qw arm64
+          test "$(stat -f%z "$model_path")" = "625860768"
+          test "$(shasum -a 256 "$model_path" | awk '{print toupper($1)}')" = "1214AFEBFE07D894E550505E3DAB6E913953A3FB123EA425D7D7731962479FCA"
       - name: Build iOS Simulator app
         run: >-
           xcodebuild

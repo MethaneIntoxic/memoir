@@ -18,6 +18,8 @@ trap capture_logcat EXIT
 cd "$android_root"
 ./gradlew :app:assembleDebug -PmemoirEmulatorSmoke=true --stacktrace
 
+node "$repo_root/mobile/scripts/verify-android-apk.mjs" --apk "$apk_path" --abi x86_64
+
 zipinfo -1 "$apk_path" > "$apk_entries"
 grep -Fxq 'lib/x86_64/libmemoirllama.so' "$apk_entries"
 if grep -q '^lib/arm64-v8a/' "$apk_entries"; then

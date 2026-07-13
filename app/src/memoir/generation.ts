@@ -2,6 +2,7 @@ import type { Asset, GenerateMemoirPayload, Tone } from './types.ts'
 import { MAX_VISION_ASSETS } from './assets.ts'
 import { parseGenerateMemoirPayload } from './validation.ts'
 import {
+  ensureNativeRuntimeReady,
   getNativeRuntimeBridge,
   isNativeRuntimePlatform,
   type NativeRuntimeBridge,
@@ -151,28 +152,9 @@ function resolveNativeRuntimeBridge(input: StartComposeGenerationInput): NativeR
   return input.nativeRuntimeBridge || getNativeRuntimeBridge()
 }
 
-function readAndroidHealth(value: unknown): { available: boolean; reason: string } {
-  if (!isRecord(value)) {
-    return { available: false, reason: 'android-ai-health-invalid' }
-  }
-
-  return {
-    available: value.available === true,
-    reason: readString(value.reason) || 'android-ai-runtime-unavailable',
-  }
-}
-
 async function generateViaNativeBridge(input: StartComposeGenerationInput, bridge: NativeRuntimeBridge): Promise<GenerateMemoirPayload> {
   const jobId = `native-${Date.now()}-${Math.random().toString(16).slice(2)}`
-  let health = readAndroidHealth(await bridge.health())
-
-  if (!health.available) {
-    health = readAndroidHealth(await bridge.prepare())
-  }
-
-  if (!health.available) {
-    throw new Error(health.reason)
-  }
+  await ensureNativeRuntimeReady(bridge)
 
   const abortHandler = () => {
     void bridge.cancelGeneration({ jobId }).catch(() => null)

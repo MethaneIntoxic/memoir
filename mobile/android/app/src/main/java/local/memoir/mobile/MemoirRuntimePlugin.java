@@ -2,8 +2,10 @@ package local.memoir.mobile;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.app.ActivityManager;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.StatFs;
 import android.util.Base64;
 
 import com.getcapacitor.JSObject;
@@ -50,6 +52,8 @@ public class MemoirRuntimePlugin extends Plugin {
     private static final String MODEL_ASSET_PATH = "memoir-models/" + MODEL_FILE_NAME;
     private static final String MODEL_SHA256 = "1214AFEBFE07D894E550505E3DAB6E913953A3FB123EA425D7D7731962479FCA";
     private static final long MODEL_SIZE_BYTES = 625_860_768L;
+    private static final long MINIMUM_PHYSICAL_MEMORY_BYTES = 7_000_000_000L;
+    private static final long MINIMUM_PREPARE_FREE_BYTES = MODEL_SIZE_BYTES + 268_435_456L;
     private static final int MAX_ASSETS = 10;
     private static final int MAX_PHOTO_CONTEXT_ASSETS = 5;
     private static final int MAX_NOTES_CHARS = 2_000;
@@ -117,6 +121,7 @@ public class MemoirRuntimePlugin extends Plugin {
             }
 
             try {
+                verifyDeviceCapacity();
                 phase = "copying";
                 progressPct = 0;
                 failureCode = "";
@@ -322,6 +327,25 @@ public class MemoirRuntimePlugin extends Plugin {
         return new File(getContext().getCacheDir(), "memoir-staged-assets");
     }
 
+    private void verifyDeviceCapacity() {
+        ActivityManager activityManager = (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
+        if (activityManager == null) {
+            throw new IllegalStateException("native-ai-device-memory-unavailable");
+        }
+        activityManager.getMemoryInfo(memoryInfo);
+        if (memoryInfo.totalMem < MINIMUM_PHYSICAL_MEMORY_BYTES) {
+            throw new IllegalStateException("native-ai-unsupported-memory");
+        }
+
+        if (!isModelReady()) {
+            StatFs storage = new StatFs(getContext().getFilesDir().getAbsolutePath());
+            if (storage.getAvailableBytes() < MINIMUM_PREPARE_FREE_BYTES) {
+                throw new IllegalStateException("native-ai-insufficient-storage");
+            }
+        }
+    }
+
     private boolean isModelReady() {
         File model = modelFile();
         File marker = verificationMarker();
@@ -352,7 +376,14 @@ public class MemoirRuntimePlugin extends Plugin {
         }
 
         if (isModelReady()) {
-            return;
+            phase = "verifying";
+            progressPct = 85;
+            if (expectedSha256.equalsIgnoreCase(sha256(target))) {
+                progressPct = 100;
+                return;
+            }
+            deleteIfExists(target);
+            deleteIfExists(verificationMarker());
         }
 
         deleteIfExists(target);

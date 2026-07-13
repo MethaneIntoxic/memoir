@@ -1,87 +1,41 @@
-# Security and Privacy: Current Prototype
+# Security and Privacy
 
-## Honest Privacy Statement
+## Runtime boundary
 
-Memoir currently keeps its work inside a browser client and a local HTTP server that you run yourself. The repo does not contain a hosted memoir backend, account system, or cloud sync path.
+- Browser development may send sanitized photos/text to the user-configured local API. A non-local URL expands the trust boundary and is not the supported private default.
+- Packaged Electron uses a loopback-only embedded runtime.
+- Android/iOS inference is native and fail-closed. Mobile never falls through to HTTP.
+- Android’s final merged APK is verified to contain neither `INTERNET` nor `ACCESS_NETWORK_STATE`.
 
-That is the limit of the current privacy story. The prototype does not implement encrypted storage, secure deletion, or release-grade device protection.
+## Photo and prompt handling
 
-## Current Data Boundary
+- The renderer bounds source bytes, decoded pixels, dimensions, image count, and total payload, then re-encodes working copies.
+- Mobile native staging accepts only bounded JPEG/PNG/WebP with matching magic bytes.
+- ML Kit/Vision generates bounded labels for at most five photos. Native code deletes staged bytes and places only labels plus ordered story data in the text prompt.
+- User notes/music/text are treated as quoted data. Model output cannot select paths, URLs, native actions, or share targets.
 
-### What the browser does
+## Model handling
 
-- imports photos,
-- resizes and re-encodes them into JPEG working copies,
-- stores saved memoirs in browser IndexedDB,
-- and renders exports directly in the browser.
+- Mobile assets are pinned by immutable source revision, exact size, and SHA-256.
+- Android copies through a flushed `.part` file, verifies, and activates atomically in app-private storage. Prepare-time rehash repairs same-size corruption.
+- iOS verifies the protected bundled resource and excludes local data from backup where configured.
+- Both platforms reject unsupported memory class before inference; Android also rejects insufficient copy storage.
 
-### What the local server does
+## Archive and export
 
-- receives the browser working copies and text inputs,
-- calls Ollama when available,
-- or returns fallback text when Ollama is unavailable.
+- Saved memoirs live in IndexedDB/WebView app data. This is local but not encrypted-at-rest vault storage.
+- Archive clearing removes the app’s records but is not a forensic secure erase of OS/browser caches or prior exports.
+- Export filenames, MIME types, decoded sizes, and canonical destinations are allowlisted. Native exports are written only to bounded app-private temporary directories and shared through scoped platform mechanisms.
+- Exported files leave the app-private boundary and become user-managed.
 
-### What is not part of the current code path
+## Input/output hardening
 
-- remote upload service,
-- encrypted database,
-- secure key store,
-- hardened media vault,
-- or managed backup pipeline.
+- Portable archive import enforces safe paths, entry counts/sizes, image MIME/magic/pixels, string bounds, and schema validity.
+- HTML rendering escapes authored/model text and uses a restrictive preview context.
+- Native bridge methods validate job ids, asset ids, tones, strings, model state, and counts before work.
+- Diagnostics/smokes avoid raw photos, prompts, generated memoir text, private paths, or native exception detail.
 
-## What Is Stored Today
+## Claims not made
 
-Saved memoirs include:
-
-- title,
-- summary,
-- quote,
-- sections,
-- note and music cue text,
-- image data URLs,
-- timestamps,
-- and lightweight diagnostics.
-
-They are stored in browser IndexedDB for the current site origin.
-
-## Import and Metadata Reality
-
-The browser draws imported images onto a canvas and re-encodes them as resized JPEGs before sending them to the local server. In practice, that strips most embedded source metadata.
-
-This is still a prototype implementation, not a formal metadata-handling guarantee. The repo does not currently include:
-
-- metadata verification tests,
-- a secure asset pipeline,
-- or a documented forensic deletion policy.
-
-## Network Boundary Warning
-
-The Local AI URL is user-configurable. If it points at another machine, the browser sends image data and text to that server over plain HTTP unless the operator adds their own transport security.
-
-The honest default support path is same-machine local development.
-
-## Export Boundary
-
-HTML downloads and printed PDFs leave the browser-local boundary. Once exported, those files are user-managed artifacts and no longer covered by the prototype's limited local-only story.
-
-## What This Prototype Does Not Promise
-
-- No encryption at rest.
-- No secure deletion or wipe semantics.
-- No OS-backed key management.
-- No voice note privacy flow.
-- No protection against a compromised device or shared browser profile.
-- No guarantee that clearing the archive removes every browser cache artifact or downloaded file.
-
-## Current User-Control Surface
-
-The only built-in local data control in the current UI is clearing the archive stored for the site. That removes the saved archive record from IndexedDB and any legacy archive keys from `localStorage`; it is not a comprehensive secure erase feature.
-
-## Minimum Safe Framing
-
-When describing the prototype, use wording like this:
-
-- photos are processed in the browser and sent only to the configured local server,
-- saved memoirs stay in browser storage for this prototype,
-- exports are explicit user actions,
-- and stronger privacy guarantees are not implemented yet.
+- No cloud backup, multi-user boundary, secure enclave media vault, forensic deletion, or protection from a compromised/unlocked device.
+- No broad mobile privacy/release claim until physical offline traffic evidence and final iOS privacy/compliance review exist.
