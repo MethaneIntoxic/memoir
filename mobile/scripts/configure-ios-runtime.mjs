@@ -11,10 +11,12 @@ const iosAppIconPath = fileURLToPath(
 )
 const iosBrandingPaths = [
   iosAppIconPath,
-  new URL('../ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png', import.meta.url),
-  new URL('../ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-1.png', import.meta.url),
-  new URL('../ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-2.png', import.meta.url),
-].map(fileURLToPath)
+  ...[
+    new URL('../ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png', import.meta.url),
+    new URL('../ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-1.png', import.meta.url),
+    new URL('../ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-2.png', import.meta.url),
+  ].map(fileURLToPath),
+]
 
 const packageSource = `// swift-tools-version: 5.9
 import PackageDescription

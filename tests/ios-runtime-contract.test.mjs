@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import test from 'node:test'
+import { fileURLToPath } from 'node:url'
 import { mobileRuntimeManifests } from '../packages/memoir-core/index.mjs'
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8')
@@ -51,7 +53,10 @@ test('ios local data is excluded from backup and covered by file protection', ()
 
 test('capacitor sync reapplies the pinned ios runtime package', () => {
   const mobilePackage = JSON.parse(read('../mobile/package.json'))
-  const configureScript = read('../mobile/scripts/configure-ios-runtime.mjs')
+  const configureScriptURL = new URL('../mobile/scripts/configure-ios-runtime.mjs', import.meta.url)
+  const configureScript = readFileSync(configureScriptURL, 'utf8')
+  const execution = spawnSync(process.execPath, [fileURLToPath(configureScriptURL)], { encoding: 'utf8' })
+  assert.equal(execution.status, 0, execution.stderr || execution.stdout)
   assert.match(mobilePackage.scripts['cap:sync'], /configure-ios-runtime\.mjs/)
   assert.equal(existsSync(new URL('../mobile/scripts/configure-ios-runtime.mjs', import.meta.url)), true)
   assert.match(configureScript, /memoir-icon-1024\.png/)
