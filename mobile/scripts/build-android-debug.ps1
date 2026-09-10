@@ -16,6 +16,8 @@ $env:JAVA_HOME = $javaExecutable.Directory.Parent.FullName
 $env:ANDROID_HOME = $androidSdkRoot
 $env:ANDROID_SDK_ROOT = $androidSdkRoot
 $env:Path = "$env:JAVA_HOME\bin;$androidSdkRoot\platform-tools;$env:Path"
+$env:GRADLE_OPTS = '-Dorg.gradle.workers.max=2 -Dorg.gradle.parallel=false'
+$env:CMAKE_BUILD_PARALLEL_LEVEL = '2'
 
 Push-Location $mobileRoot
 try {
@@ -26,7 +28,7 @@ try {
 
     Push-Location (Join-Path $mobileRoot 'android')
     try {
-        & .\gradlew.bat :app:assembleDebug
+        & .\gradlew.bat :app:assembleDebug --no-daemon --max-workers=2
         if ($LASTEXITCODE -ne 0) {
             throw 'Android debug build failed.'
         }
@@ -36,7 +38,8 @@ try {
 
     & node (Join-Path $PSScriptRoot 'verify-android-apk.mjs') `
         --apk (Join-Path $mobileRoot 'android\app\build\outputs\apk\debug\app-debug.apk') `
-        --abi arm64-v8a
+        --abi arm64-v8a `
+        --build-type debug
     if ($LASTEXITCODE -ne 0) {
         throw 'Android debug APK verification failed.'
     }

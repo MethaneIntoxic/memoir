@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildMemoirSlides, exportInstagramFeedSlides } from '../packages/memoir-core/index.mjs'
+import {
+  buildMemoirSlides,
+  exportInstagramFeedSlides,
+  renderInstagramFeedSlideFiles,
+} from '../packages/memoir-core/index.mjs'
 import { decodeZip } from '../packages/memoir-core/zip-store.mjs'
 import { createSampleMemoir } from '../app/src/memoir/test-fixtures.ts'
 
@@ -55,4 +59,25 @@ test('exportInstagramFeedSlides renders 1080x1350 PNG entries in chapter order',
   assert.equal(manifest.width, 1080)
   assert.equal(manifest.height, 1350)
   assert.equal(manifest.slideCount, 3)
+})
+
+test('renderInstagramFeedSlideFiles exposes ordered PNGs for native carousel sharing', async () => {
+  const memoir = createSampleMemoir()
+  const rendered = []
+
+  const files = await renderInstagramFeedSlideFiles(memoir, {
+    renderSlide(slide) {
+      rendered.push(`${slide.index}:${slide.width}x${slide.height}`)
+      return new Uint8Array([slide.index, slide.count])
+    },
+  })
+
+  assert.deepEqual(rendered, ['1:1080x1350', '2:1080x1350', '3:1080x1350'])
+  assert.deepEqual(files.map((file) => file.name), [
+    '01-train-window-keepsake.png',
+    '02-train-window-keepsake.png',
+    '03-train-window-keepsake.png',
+  ])
+  assert.ok(files.every((file) => file.mimeType === 'image/png'))
+  assert.deepEqual([...files[2].content], [3, 3])
 })

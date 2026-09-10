@@ -174,7 +174,7 @@ if ($missingToolPaths) {
     throw "Android SDK package installation was incomplete. Missing: $($missingToolPaths -join ', ')"
 }
 
-$sdkPropertyPath = $androidSdkRoot.Replace('\', '/')
+$sdkPropertyPath = $androidSdkRoot.Replace('\', '/').Replace(':', '\:')
 $localProperties = Join-Path $mobileRoot 'android\local.properties'
 Set-Content -LiteralPath $localProperties -Encoding ascii -Value "sdk.dir=$sdkPropertyPath"
 

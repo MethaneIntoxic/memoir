@@ -4,6 +4,7 @@
 #include <jni.h>
 
 #include <algorithm>
+#include <chrono>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -13,9 +14,13 @@
 
 namespace {
 constexpr const char * LOG_TAG = "MemoirLlama";
-constexpr int DEFAULT_CONTEXT_TOKENS = 2048;
+constexpr int MIN_CONTEXT_TOKENS = 1024;
+constexpr int MAX_CONTEXT_TOKENS = 2048;
+constexpr int PROMPT_BATCH_TOKENS = 512;
+constexpr int THREAD_HEADROOM = 2;
 constexpr int MIN_GENERATION_TOKENS = 8;
 constexpr int MAX_GENERATION_TOKENS = 900;
+constexpr size_t MAX_GRAMMAR_BYTES = 32 * 1024;
 
 std::mutex g_mutex;
 std::mutex g_cancel_mutex;
@@ -154,84 +159,170 @@ std::string token_to_piece(const llama_vocab * vocab, llama_token token) {
     return std::string(buffer, static_cast<size_t>(size));
 }
 
-std::string generate_text(const std::string & model_path, const std::string & prompt, const std::string & job_id, int max_tokens) {
+bool json_object_complete(const std::string & value) {
+    bool started = false;
+    bool in_string = false;
+    bool escaped = false;
+    int depth = 0;
+
+    for (char character : value) {
+        if (!started) {
+            if (character == '{') {
+                started = true;
+                depth = 1;
+            }
+            continue;
+        }
+        if (escaped) {
+            escaped = false;
+            continue;
+        }
+        if (in_string && character == '\\') {
+            escaped = true;
+            continue;
+        }
+        if (character == '"') {
+            in_string = !in_string;
+            continue;
+        }
+        if (in_string) {
+            continue;
+        }
+        if (character == '{') {
+            depth += 1;
+        } else if (character == '}' && --depth == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+std::string generate_text(
+    const std::string & model_path,
+    const std::string & prompt,
+    const std::string & job_id,
+    const std::string & grammar,
+    int max_tokens
+) {
     std::lock_guard<std::mutex> lock(g_mutex);
 
+    if (grammar.empty() || grammar.size() > MAX_GRAMMAR_BYTES) {
+        throw std::runtime_error("native-ai-invalid-grammar");
+    }
+
     if (is_cancelled(job_id)) {
-        throw std::runtime_error("android-ai-generation-cancelled");
+        throw std::runtime_error("native-ai-generation-cancelled");
     }
 
     if (!ensure_model_loaded(model_path)) {
-        throw std::runtime_error("android-ai-model-load-failed");
+        throw std::runtime_error("native-ai-model-load-failed");
     }
 
     if (is_cancelled(job_id)) {
-        throw std::runtime_error("android-ai-generation-cancelled");
+        throw std::runtime_error("native-ai-generation-cancelled");
     }
 
     const llama_vocab * vocab = llama_model_get_vocab(g_model);
     const std::string formatted_prompt = apply_chat_template(g_model, prompt);
     std::vector<llama_token> prompt_tokens = tokenize_prompt(vocab, formatted_prompt);
     if (prompt_tokens.empty()) {
-        throw std::runtime_error("android-ai-tokenize-failed");
+        throw std::runtime_error("native-ai-tokenize-failed");
     }
 
     const int predicted_tokens = std::max(MIN_GENERATION_TOKENS, std::min(max_tokens, MAX_GENERATION_TOKENS));
-    const int n_ctx = std::max(DEFAULT_CONTEXT_TOKENS, static_cast<int>(prompt_tokens.size()) + predicted_tokens + 32);
-    const int n_threads = std::max(1, std::min(4, static_cast<int>(std::thread::hardware_concurrency())));
+    const int required_context = static_cast<int>(prompt_tokens.size()) + predicted_tokens + 32;
+    if (required_context > MAX_CONTEXT_TOKENS) {
+        throw std::runtime_error("native-ai-context-too-large");
+    }
+    const int n_ctx = std::max(MIN_CONTEXT_TOKENS, required_context);
+    const int online_threads = static_cast<int>(std::thread::hardware_concurrency());
+    const int n_threads = std::max(2, std::min(4, online_threads - THREAD_HEADROOM));
 
     llama_context_params ctx_params = llama_context_default_params();
-    ctx_params.n_ctx = static_cast<uint32_t>(std::min(n_ctx, 4096));
-    ctx_params.n_batch = static_cast<uint32_t>(
-        std::min<int>(ctx_params.n_ctx, std::max<int>(static_cast<int>(prompt_tokens.size()), 512))
-    );
+    ctx_params.n_ctx = static_cast<uint32_t>(n_ctx);
+    ctx_params.n_batch = PROMPT_BATCH_TOKENS;
+    ctx_params.n_ubatch = PROMPT_BATCH_TOKENS;
     ctx_params.n_threads = n_threads;
     ctx_params.n_threads_batch = n_threads;
     ctx_params.no_perf = true;
-    ctx_params.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED;
 
     llama_context * ctx = llama_init_from_model(g_model, ctx_params);
     if (ctx == nullptr) {
-        throw std::runtime_error("android-ai-context-init-failed");
+        throw std::runtime_error("native-ai-context-init-failed");
     }
 
     llama_sampler * sampler = llama_sampler_chain_init(llama_sampler_chain_default_params());
+    llama_sampler_chain_add(sampler, llama_sampler_init_grammar(vocab, grammar.c_str(), "root"));
     llama_sampler_chain_add(sampler, llama_sampler_init_top_k(40));
     llama_sampler_chain_add(sampler, llama_sampler_init_top_p(0.90f, 1));
-    llama_sampler_chain_add(sampler, llama_sampler_init_temp(0.70f));
+    llama_sampler_chain_add(sampler, llama_sampler_init_temp(0.30f));
     llama_sampler_chain_add(sampler, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
 
     std::string output;
-    llama_batch batch = llama_batch_get_one(prompt_tokens.data(), prompt_tokens.size());
     llama_token sampled_token{};
+    int generated_count = 0;
+    const auto generation_started = std::chrono::steady_clock::now();
+
+    for (size_t offset = 0; offset < prompt_tokens.size(); offset += PROMPT_BATCH_TOKENS) {
+        if (is_cancelled(job_id)) {
+            llama_sampler_free(sampler);
+            llama_free(ctx);
+            throw std::runtime_error("native-ai-generation-cancelled");
+        }
+        const int batch_size = static_cast<int>(
+            std::min<size_t>(PROMPT_BATCH_TOKENS, prompt_tokens.size() - offset)
+        );
+        llama_batch prompt_batch = llama_batch_get_one(prompt_tokens.data() + offset, batch_size);
+        if (llama_decode(ctx, prompt_batch) != 0) {
+            llama_sampler_free(sampler);
+            llama_free(ctx);
+            throw std::runtime_error("native-ai-decode-failed");
+        }
+    }
 
     for (int generated = 0; generated < predicted_tokens; generated += 1) {
         if (is_cancelled(job_id)) {
             llama_sampler_free(sampler);
             llama_free(ctx);
-            throw std::runtime_error("android-ai-generation-cancelled");
-        }
-
-        if (llama_decode(ctx, batch) != 0) {
-            llama_sampler_free(sampler);
-            llama_free(ctx);
-            throw std::runtime_error("android-ai-decode-failed");
+            throw std::runtime_error("native-ai-generation-cancelled");
         }
 
         sampled_token = llama_sampler_sample(sampler, ctx, -1);
+        generated_count = generated + 1;
         if (llama_vocab_is_eog(vocab, sampled_token)) {
             break;
         }
 
         std::string piece = token_to_piece(vocab, sampled_token);
         output += piece;
+        if (json_object_complete(output)) {
+            break;
+        }
 
-        batch = llama_batch_get_one(&sampled_token, 1);
+        llama_batch token_batch = llama_batch_get_one(&sampled_token, 1);
+        if (llama_decode(ctx, token_batch) != 0) {
+            llama_sampler_free(sampler);
+            llama_free(ctx);
+            throw std::runtime_error("native-ai-decode-failed");
+        }
     }
 
     llama_sampler_free(sampler);
     llama_free(ctx);
     clear_cancelled(job_id);
+    const auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - generation_started
+    ).count();
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        LOG_TAG,
+        "generation-complete tokens=%d chars=%zu elapsedMs=%lld jsonComplete=%s",
+        generated_count,
+        output.size(),
+        static_cast<long long>(elapsed_ms),
+        json_object_complete(output) ? "true" : "false"
+    );
     return output;
 }
 }
@@ -248,6 +339,7 @@ Java_local_memoir_mobile_MemoirRuntimePlugin_nativeGenerate(
     jstring model_path,
     jstring prompt,
     jstring job_id,
+    jstring grammar,
     jint max_tokens
 ) {
     const std::string job_id_value = jstring_to_string(env, job_id);
@@ -256,6 +348,7 @@ Java_local_memoir_mobile_MemoirRuntimePlugin_nativeGenerate(
             jstring_to_string(env, model_path),
             jstring_to_string(env, prompt),
             job_id_value,
+            jstring_to_string(env, grammar),
             static_cast<int>(max_tokens)
         );
         return string_to_jstring(env, result);
@@ -273,4 +366,14 @@ Java_local_memoir_mobile_MemoirRuntimePlugin_nativeCancel(JNIEnv * env, jclass, 
         g_cancelled_jobs.clear();
     }
     g_cancelled_jobs.insert(jstring_to_string(env, job_id));
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_local_memoir_mobile_MemoirRuntimePlugin_nativeUnload(JNIEnv *, jclass) {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    if (g_model != nullptr) {
+        llama_model_free(g_model);
+        g_model = nullptr;
+        g_model_path.clear();
+    }
 }

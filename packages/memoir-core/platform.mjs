@@ -22,7 +22,7 @@ const nativeBridgeContracts = {
   RuntimeAdapter: ['health', 'prepare', 'stageAsset', 'clearStagedAssets', 'generate', 'rewrite', 'cancel'],
   ExportAdapter: ['writeMemoir', 'writeHtml', 'writePdf', 'share'],
   MemoirRuntime: ['health', 'prepare', 'stageAsset', 'clearStagedAssets', 'generateMemoir', 'rewrite', 'cancelGeneration'],
-  MemoirFiles: ['shareFile'],
+  MemoirFiles: ['shareFile', 'shareFiles'],
 }
 
 const qwen35Q5Runtime = {
@@ -41,6 +41,9 @@ const qwen35Q5Runtime = {
 const mobileRuntimeManifests = {
   android: {
     ...qwen35Q5Runtime,
+    contextSize: 2048,
+    maxTokens: 392,
+    minimumMemoryClass: '4gb-ram',
     deliveryMode: 'direct-apk-assets',
   },
   ios: {

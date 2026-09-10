@@ -7,6 +7,8 @@ const appPath = new URL('../app/src/App.tsx', import.meta.url)
 const shellPath = new URL('../app/src/memoir/ui/MemoirShell.tsx', import.meta.url)
 const settingsPath = new URL('../app/src/memoir/ui/SettingsScreen.tsx', import.meta.url)
 const shareDialogPath = new URL('../app/src/memoir/ui/ShareExportDialog.tsx', import.meta.url)
+const composePath = new URL('../app/src/memoir/ui/ComposeScreen.tsx', import.meta.url)
+const statusLinePath = new URL('../app/src/memoir/ui/StatusLine.tsx', import.meta.url)
 
 test('archive and create share responsive mobile and desktop shell widths', async () => {
   const css = await readFile(appCssPath, 'utf8')
@@ -27,6 +29,16 @@ test('fixed bottom navigation reserves safe content space', async () => {
   assert.match(css, /\.bottom-nav\s*\{[^}]*position:\s*static/s)
 })
 
+test('mobile AI status stays concise while retaining full accessible diagnostics', async () => {
+  const statusLine = await readFile(statusLinePath, 'utf8')
+
+  assert.match(statusLine, /On-device AI: \$\{health\}\. Current activity: \$\{stage\}/)
+  assert.match(statusLine, /\? 'Ready'/)
+  assert.match(statusLine, /\? 'Preparing' : 'Checking'/)
+  assert.match(statusLine, /: 'Unavailable'/)
+  assert.match(statusLine, /title=\{health\}/)
+})
+
 test('wireframe-backed settings and share surfaces are reachable and functional', async () => {
   const [shell, settings, shareDialog] = await Promise.all([
     readFile(shellPath, 'utf8'),
@@ -44,7 +56,17 @@ test('wireframe-backed settings and share surfaces are reachable and functional'
   assert.match(shareDialog, /role="dialog"/)
   assert.match(shareDialog, /Save as PDF/)
   assert.match(shareDialog, /Export portable \.memoir/)
-  assert.match(shareDialog, /Rendering 4:5 slides/)
+  assert.match(shareDialog, /Preparing social carousel/)
+  assert.match(shareDialog, /Instagram \/ TikTok carousel/)
+})
+
+test('create screen explains the minimum photo count and hides developer routing by default', async () => {
+  const compose = await readFile(composePath, 'utf8')
+
+  assert.match(compose, /missingPhotoCount = Math\.max\(0, 3 - selectedCount\)/)
+  assert.match(compose, /Add \$\{missingPhotoCount\} more photo/)
+  assert.match(compose, /showAdvancedRuntimeSettings/)
+  assert.match(compose, /showAdvancedRuntimeSettings \? \(/)
 })
 
 test('replacing or closing unsaved work is confirmation-gated', async () => {

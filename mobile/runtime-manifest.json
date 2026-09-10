@@ -10,9 +10,9 @@
       "modelSource": "https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/6f447fc6494c4b0f7dc269f8c39da6c61555a0de/Qwen_Qwen3.5-0.8B-Q5_K_M.gguf",
       "modelSha256": "1214AFEBFE07D894E550505E3DAB6E913953A3FB123EA425D7D7731962479FCA",
       "modelSizeBytes": 625860768,
-      "contextSize": 4096,
-      "maxTokens": 768,
-      "minimumMemoryClass": "8gb-ram",
+      "contextSize": 2048,
+      "maxTokens": 392,
+      "minimumMemoryClass": "4gb-ram",
       "deliveryMode": "direct-apk-assets"
     },
     "ios": {

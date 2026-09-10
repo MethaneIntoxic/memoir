@@ -103,6 +103,12 @@ export type InstagramFeedSlideExportOptions = {
   renderSlide: (slide: MemoirSlide) => Uint8Array | Promise<Uint8Array>
 }
 
+export type InstagramFeedSlideFile = {
+  name: string
+  mimeType: 'image/png'
+  content: Uint8Array
+}
+
 export type PortableMemoirResult = {
   manifest: Record<string, unknown>
   memoir: Memoir
@@ -145,6 +151,10 @@ export function exportInstagramFeedSlides(
   memoir: Memoir,
   options: InstagramFeedSlideExportOptions,
 ): Promise<Uint8Array>
+export function renderInstagramFeedSlideFiles(
+  memoir: Memoir,
+  options: InstagramFeedSlideExportOptions,
+): Promise<InstagramFeedSlideFile[]>
 export function normalizeApiBase(value: string): string
 export function parseGenerateMemoirPayload(value: unknown): GenerateMemoirPayload | null
 export function parseMemoir(value: unknown): Memoir | null

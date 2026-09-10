@@ -6,18 +6,21 @@
 |---|---|---|---|
 | Browser development | Shared UI, archive, local HTTP generation/fallback, editing, export | Unit tests, production build, lint, Playwright QA | Broader browser matrix if publicly supported |
 | Windows desktop | Electron shell, embedded llama runtime, portable EXE | Packaged layout, single-file, and real-model quality smokes | Code signing and clean-machine release acceptance |
-| Android | Capacitor app, arm64 JNI llama inference, ML Kit photo context, verified private model | arm64 APK build/inspection and x86_64 emulator inference | Supported arm64 phone, offline public flow, performance/thermal, signed release |
+| Android | Capacitor app, arm64 JNI llama inference, ML Kit photo context, verified private model | arm64 Java/JNI compilation, APK inspection, and bounded x86_64 JNI evidence | Supported arm64 phone, offline public flow, performance/thermal, signed release |
 | iOS | Capacitor app, Swift llama inference, Vision photo context, protected model/data | Simulator inference and unsigned arm64 Release build | Signed supported iPhone, offline public flow, performance/thermal, Xcode 26 archive/TestFlight |
 
-Memoir is not “mobile release ready” until the physical gates in `docs/15-physical-device-acceptance.md` are recorded.
+Memoir is not mobile release ready until the physical gates in `docs/15-physical-device-acceptance.md` are recorded.
 
 ## Mobile constraints
 
-- Android and iOS require an arm64 device in the 8 GB RAM class. Runtime preparation fails clearly on lower-memory devices.
+- Android requires an arm64 device in the 4 GB RAM class with at least 1.3 GB currently available; iOS remains gated to the 8 GB RAM class until equivalent physical-device evidence exists. Runtime preparation fails clearly when either platform's gate is not met.
 - The bundled model is 625,860,768 bytes. Android also needs free app storage for its verified private copy; the device runner requires at least 2,000,000 KiB free under `/data` before installation/testing.
 - Android production/debug packaging is arm64-only. x86_64 exists only behind the exact emulator-smoke Gradle property and cannot be used for a Release task.
 - The first five sanitized photos receive on-device classifier labels. All selected photos remain ordered in the story contract.
 - Native generation is CPU-only. Simulator/emulator timings are not representative of phone latency, thermals, or memory pressure.
+- Android uses a 1,024-2,048-token context, 512-token prompt batches, 2-4 worker threads with two CPU cores reserved, and a 196-392 token compose budget. Production generation and rewrite are cancelled after 120 and 60 seconds respectively.
+- Android checks severe thermal state before inference and every five seconds while decoding. The model is unloaded after every compose, rewrite, cancellation, or failure so its mapped pages are not retained while the user reads or edits.
+- ARM64 native builds enable release-grade optimization and KleidiAI kernels. These settings compile successfully; speedup remains a physical-phone measurement, not a source-level claim.
 
 ## Client processing
 
@@ -35,6 +38,6 @@ Memoir is not “mobile release ready” until the physical gates in `docs/15-ph
 
 ## Performance claims allowed today
 
-- Real local generation works in packaged Windows, Android emulator, and iOS Simulator evidence paths.
+- Real local generation works in packaged Windows and iOS Simulator evidence paths. A direct Android x86 JNI harness produced a complete three-section memoir in one 127-token pass with about 1.1 GB resident process memory. A later public-bridge run completed native JSON generation but raced the old harness deadline before the JavaScript callback was accepted, so Android public-flow completion remains unproven.
 - Android arm64 and iOS arm64 Release binaries compile with the pinned model/runtime.
 - No claim is made yet for phone latency, supported-device breadth, thermal sustainability, peak memory, or background-resume completion.

@@ -2,7 +2,10 @@ import { Capacitor, registerPlugin } from '@capacitor/core'
 
 type NativeFilesBridge = {
   shareFile(payload: { name: string; mimeType: string; base64Data: string }): Promise<unknown>
+  shareFiles(payload: { files: Array<{ name: string; mimeType: string; base64Data: string }> }): Promise<unknown>
 }
+
+export type BinaryShareFile = { name: string; mimeType: string; content: Uint8Array }
 
 const MemoirFiles = registerPlugin<NativeFilesBridge>('MemoirFiles')
 
@@ -47,6 +50,32 @@ export async function deliverBinaryFile(name: string, content: Uint8Array, mimeT
   const arrayBuffer = new ArrayBuffer(content.byteLength)
   new Uint8Array(arrayBuffer).set(content)
   downloadBlob(name, new Blob([arrayBuffer], { type: mimeType }))
+}
+
+export async function deliverBinaryFiles(files: BinaryShareFile[]): Promise<void> {
+  if (!files.length) {
+    throw new Error('native-export-empty-file-list')
+  }
+
+  if (isNativeMobile()) {
+    if (!Capacitor.isPluginAvailable('MemoirFiles')) {
+      throw new Error('native-export-plugin-unavailable')
+    }
+    await MemoirFiles.shareFiles({
+      files: files.map((file) => ({
+        name: file.name,
+        mimeType: file.mimeType,
+        base64Data: bytesToBase64(file.content),
+      })),
+    })
+    return
+  }
+
+  for (const file of files) {
+    const arrayBuffer = new ArrayBuffer(file.content.byteLength)
+    new Uint8Array(arrayBuffer).set(file.content)
+    downloadBlob(file.name, new Blob([arrayBuffer], { type: file.mimeType }))
+  }
 }
 
 export { isNativeMobile }

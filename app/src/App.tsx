@@ -23,6 +23,7 @@ import {
   openMemoirPrintPreview,
 } from './memoir/export.ts'
 import {
+  describeGenerationFailure,
   startComposeGeneration,
   type ComposeGenerationProgress,
 } from './memoir/generation.ts'
@@ -316,7 +317,7 @@ function App() {
         return
       }
 
-      const message = error instanceof Error ? error.message : 'Generation failed'
+      const message = describeGenerationFailure(error)
       setGenerationProgress((current) => ({
         ...current,
         status: controller.signal.aborted ? 'cancelled' : 'failed',
@@ -483,7 +484,7 @@ function App() {
       )
       setStage('Section polished')
     } catch (error) {
-      setStage(error instanceof Error ? error.message : 'Section rewrite failed')
+      setStage(describeGenerationFailure(error))
     } finally {
       setBusySection('')
     }
@@ -584,6 +585,7 @@ function App() {
           notes={notes}
           musicCue={musicCue}
           apiBase={apiBase}
+          showAdvancedRuntimeSettings={showDebugUi}
           isGenerating={isGenerating}
           generationProgress={generationProgress}
           onFiles={handleFiles}

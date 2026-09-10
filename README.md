@@ -65,6 +65,15 @@ npm --prefix mobile run smoke:android:device
 
 The runner refuses emulators and unsupported devices and does not change connectivity settings.
 
+For a signed sideload release, configure the four `MEMOIR_ANDROID_*` signing variables, then run:
+
+```powershell
+npm --prefix mobile run build:android:apk
+npm --prefix mobile run smoke:android:release
+```
+
+The first command verifies and publishes the APK under `output/releases/android`; the second runs the same offline local-LLM acceptance against the non-debuggable signed artifact.
+
 ## iOS
 
 The committed Xcode project is under `mobile/ios/App`. A macOS host with Xcode is required:

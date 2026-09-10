@@ -29,7 +29,7 @@
 - [ ] Public prepare, three-photo staging/generation, first-action rewrite, active cancellation/recovery, archive relaunch, and export/share pass.
 - [ ] Configure `MEMOIR_ANDROID_KEYSTORE`, `MEMOIR_ANDROID_KEYSTORE_PASSWORD`, `MEMOIR_ANDROID_KEY_ALIAS`, and `MEMOIR_ANDROID_KEY_PASSWORD`.
 - [ ] `npm --prefix mobile run build:android:apk` produces a signed Release APK.
-- [ ] Run the APK verifier and the complete physical acceptance against that signed Release artifact.
+- [ ] `npm --prefix mobile run smoke:android:release` passes the same complete offline suite against that signed Release artifact.
 - [ ] Record signature certificate, SHA-256, size, ABI, model allowlist, permission set, commit, device matrix, latency, memory, and thermals.
 
 ## iOS

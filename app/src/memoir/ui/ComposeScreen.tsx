@@ -21,6 +21,7 @@ type ComposeScreenProps = {
   notes: string
   musicCue: string
   apiBase: string
+  showAdvancedRuntimeSettings: boolean
   isGenerating: boolean
   generationProgress: ComposeGenerationProgress
   onFiles: (event: ChangeEvent<HTMLInputElement>) => void
@@ -118,6 +119,7 @@ export function ComposeScreen({
   notes,
   musicCue,
   apiBase,
+  showAdvancedRuntimeSettings,
   isGenerating,
   generationProgress,
   onFiles,
@@ -131,6 +133,12 @@ export function ComposeScreen({
   onCancel,
 }: ComposeScreenProps) {
   const selectedCount = assets.length
+  const missingPhotoCount = Math.max(0, 3 - selectedCount)
+  const generateLabel = isGenerating
+    ? 'Drafting story...'
+    : missingPhotoCount > 0
+      ? `Add ${missingPhotoCount} more photo${missingPhotoCount === 1 ? '' : 's'}`
+      : `Create story from ${selectedCount} photos`
 
   return (
     <section className="screen compose-screen">
@@ -155,7 +163,7 @@ export function ComposeScreen({
             <SparkleIcon />
             <div>
               <h3>AI layout studio</h3>
-              <p>{selectedCount ? `${selectedCount} selected. First ${Math.min(selectedCount, MAX_VISION_ASSETS)} get live visual analysis.` : 'Start with the photos that belong to the same day.'}</p>
+              <p>{selectedCount ? `${selectedCount} selected. Up to ${Math.min(selectedCount, MAX_VISION_ASSETS)} get private on-device visual cues.` : 'Start with the photos that belong to the same day.'}</p>
             </div>
           </div>
 
@@ -205,20 +213,22 @@ export function ComposeScreen({
           </dl>
           <button type="button" className="primary-button" onClick={onGenerate} disabled={selectedCount < 3 || isGenerating}>
             <SparkleIcon />
-            <span>{isGenerating ? 'Drafting story...' : `Generate from ${selectedCount || 0} photos`}</span>
+            <span>{generateLabel}</span>
           </button>
           {isGenerating ? (
             <button type="button" className="soft-button" onClick={onCancel}>
               Cancel
             </button>
           ) : null}
-          <details className="advanced-panel">
-            <summary>Local AI route</summary>
-            <label className="field-label">
-              <span>API base</span>
-              <input value={apiBase} onChange={(event) => onApiBaseChange(event.target.value)} placeholder="/api or http://YOUR-LAN-IP:8787/api" />
-            </label>
-          </details>
+          {showAdvancedRuntimeSettings ? (
+            <details className="advanced-panel">
+              <summary>Developer AI route</summary>
+              <label className="field-label">
+                <span>API base</span>
+                <input value={apiBase} onChange={(event) => onApiBaseChange(event.target.value)} placeholder="/api or http://127.0.0.1:8787/api" />
+              </label>
+            </details>
+          ) : null}
         </aside>
       </div>
 

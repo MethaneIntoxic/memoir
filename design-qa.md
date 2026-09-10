@@ -78,4 +78,29 @@ A separate crop was not necessary because the 980 x 940 combined comparison keep
 - Fresh source and implementation captures were rendered together in `output/playwright/memoir-final/settings-share-comparison-final.png`; focused settings and share comparisons were captured from that same board.
 - No actionable P0, P1, or P2 settings/share findings remain. The remaining native photo-picker and physical-device checks are platform validation gaps, not browser-visible design defects.
 
+## 2026-08-12 creation, reader, and social-carousel pass
+
+- Fresh captures: `output/qa-home-390.png`, `output/qa-create-390.png`, `output/qa-create-two-390.png`, `output/qa-reader-390.png`, `output/qa-share-390.png`, and `output/qa-create-1440.png`.
+- The visual direction keeps the editorial Memoir identity but replaces the heavier monochrome panels with warm paper, ink, sage status, and restrained blush selection. It uses candid user photos as the visual focus and avoids treating young women as one aesthetic segment.
+- Research constraints: Material 3 informed reachable controls and visible state; Android Sharesheet is the privacy-preserving multi-image handoff; direct TikTok Share Kit integration is deferred because it introduces platform credentials and approval without removing the user's final posting step. Recent research on Gen Z social media behavior supports authentic, self-directed presentation over an over-polished branded look.
+- Create no longer changes shell width. With two photos, the primary action says `Add 1 more photo`; after three, it becomes the creation action. Advanced local-route configuration is hidden outside developer mode.
+- Reader uses horizontal CSS scroll snap on mobile and desktop. At 390px, the measured track was 366px wide with 904px scroll content, confirming a real horizontal carousel rather than a static stacked layout.
+- Social export is labeled `Instagram / TikTok carousel`, renders one 1080 x 1350 PNG per chapter, and shares the ordered files directly on mobile. Browser verification covered the export action and modal state; target-app ingestion remains a physical-device gate.
+- Fresh Playwright verification reported 390px body `scrollWidth` and `clientWidth`, so no horizontal page overflow exists. Archive, Create, Reader, and Share completed without console errors.
+
+Research references: [Material 3](https://m3.material.io/), [Android Sharesheet](https://developer.android.com/training/sharing/send), [TikTok Share Kit](https://developers.tiktok.com/doc/share-kit-android-quickstart-v2), and [Frontiers research on Gen Z authenticity](https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2025.1651435/full).
+
+## 2026-08-13 mobile performance and fresh-flow verification
+
+- Fresh accepted captures: `output/playwright/memoir-current-audit/01-archive-mobile.png`, `02-reader-mobile.png`, `03-share-mobile.png`, `04-share-desktop.png`, and `08-create-mobile-final-settled.png`.
+- The visual direction remains photo-first, editorial, candid, and user-authored rather than applying a stereotyped "female" palette. Research is translated into autonomy, clear privacy, fast paths, authentic copy, and strong visual hierarchy instead of demographic decoration.
+- The persistent AI strip now renders the compact visible states `Ready`, `Preparing`, `Checking`, or `Unavailable`; its full model/error detail remains in the accessible label, tooltip, and Settings.
+- At 390 x 844, Create had no horizontal overflow: document `scrollWidth` equaled `clientWidth` at 375 CSS px after the desktop scrollbar was accounted for. The final primary action ended 34 px above the fixed bottom navigation.
+- Archive and Create share the same responsive shell. Their measured 15 px desktop-browser difference came only from Create requiring a vertical scrollbar; neither view expands past its available layout viewport.
+- The Reader presented a real horizontal three-slide track, and the share dialog fit at 390 x 844 and 1440 x 900 without clipped labels or nested scrolling.
+- The browser-only session recorded two expected Vite proxy 502 responses for `/api/health` because no API/native runtime was started. It recorded no React exception, layout error, or console warning. Native health behavior remains covered by bridge tests and the physical-device gate.
+- TikTok's current Android guide explicitly supports `ACTION_SEND_MULTIPLE`, multiple image URIs, `image/*`, and read grants without Share Kit. The existing system chooser remains the smallest offline implementation and preserves user confirmation. Target-app ingestion is still a physical-device acceptance item.
+
+Additional research reference: [Android thermal and CPU guidance](https://developer.android.com/games/optimize/adpf).
+
 final result: passed

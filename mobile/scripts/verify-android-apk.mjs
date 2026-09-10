@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
@@ -14,6 +14,7 @@ for (let index = 2; index < process.argv.length; index += 2) {
 
 const apkPath = path.resolve(repositoryRoot, argumentsByName.get('--apk') || 'mobile/android/app/build/outputs/apk/debug/app-debug.apk')
 const expectedAbi = argumentsByName.get('--abi') || 'arm64-v8a'
+const expectedBuildType = argumentsByName.get('--build-type') || 'any'
 const expectedPackage = 'local.memoir.mobile'
 const expectedModelEntry = 'assets/memoir-models/Qwen_Qwen3.5-0.8B-Q5_K_M.gguf'
 const forbiddenPermissions = [
@@ -58,6 +59,16 @@ function resolveJava() {
       return executable
     }
   }
+  const bundledJdkRoot = path.join(repositoryRoot, 'output', 'toolchains', 'jdk-21')
+  if (existsSync(bundledJdkRoot)) {
+    for (const entry of readdirSync(bundledJdkRoot, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue
+      const candidate = path.join(bundledJdkRoot, entry.name, 'bin', process.platform === 'win32' ? 'java.exe' : 'java')
+      if (existsSync(candidate)) {
+        return candidate
+      }
+    }
+  }
   return process.platform === 'win32' ? 'java.exe' : 'java'
 }
 
@@ -67,10 +78,14 @@ if (!existsSync(apkPath)) {
 if (!['arm64-v8a', 'x86_64'].includes(expectedAbi)) {
   throw new Error(`Unsupported expected ABI: ${expectedAbi}`)
 }
+if (!['any', 'debug', 'release'].includes(expectedBuildType)) {
+  throw new Error(`Unsupported expected build type: ${expectedBuildType}`)
+}
 
 const aapt = resolveBuildTool('aapt')
 const apksignerJar = resolveApkSignerJar()
 const permissions = run(aapt, ['dump', 'permissions', apkPath])
+const badging = run(aapt, ['dump', 'badging', apkPath])
 const entries = run(aapt, ['list', apkPath]).split(/\r?\n/).filter(Boolean)
 
 if (!permissions.includes(`package: ${expectedPackage}`)) {
@@ -104,13 +119,29 @@ if (entries.some((entry) => /libc\+\+_shared\.so$/i.test(entry))) {
   throw new Error('APK unexpectedly depends on libc++_shared.so.')
 }
 
-run(resolveJava(), ['-jar', apksignerJar, 'verify', '--verbose', apkPath])
+const isDebuggable = /(^|\r?\n)application-debuggable(?:\r?\n|$)/.test(badging)
+if (expectedBuildType === 'debug' && !isDebuggable) {
+  throw new Error('Expected a debuggable APK, but android:debuggable is disabled.')
+}
+if (expectedBuildType === 'release' && isDebuggable) {
+  throw new Error('Release APK unexpectedly enables android:debuggable.')
+}
+
+const signatureVerification = run(resolveJava(), ['-jar', apksignerJar, 'verify', '--verbose', apkPath])
+if (!signatureVerification.includes('Verified using v2 scheme (APK Signature Scheme v2): true')) {
+  throw new Error('APK is not signed with APK Signature Scheme v2.')
+}
+if (!signatureVerification.includes('Number of signers: 1')) {
+  throw new Error('APK must have exactly one signer.')
+}
 const sha256 = createHash('sha256').update(readFileSync(apkPath)).digest('hex').toUpperCase()
 console.log(JSON.stringify({
   ok: true,
   apk: path.relative(repositoryRoot, apkPath).replaceAll(path.sep, '/'),
   package: expectedPackage,
   abi: expectedAbi,
+  buildType: expectedBuildType,
+  debuggable: isDebuggable,
   model: expectedModelEntry,
   forbiddenPermissionsAbsent: forbiddenPermissions,
   sha256,

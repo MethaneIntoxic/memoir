@@ -55,10 +55,6 @@ function buildMemoirSlides(memoir) {
 }
 
 async function exportInstagramFeedSlides(memoir, options = {}) {
-  if (typeof options.renderSlide !== 'function') {
-    throw new Error('instagram-slide-renderer-required')
-  }
-
   const parsedMemoir = parseMemoir(memoir)
   if (!parsedMemoir) {
     throw new Error('invalid-instagram-slide-source')
@@ -66,19 +62,7 @@ async function exportInstagramFeedSlides(memoir, options = {}) {
 
   const generatedAt = new Date().toISOString()
   const slides = buildMemoirSlides(parsedMemoir)
-  const slideEntries = []
-
-  for (const slide of slides) {
-    const content = await options.renderSlide(slide)
-    if (!(content instanceof Uint8Array)) {
-      throw new Error(`invalid-instagram-slide-render:${slide.index}`)
-    }
-
-    slideEntries.push({
-      path: slide.fileName,
-      content,
-    })
-  }
+  const slideFiles = await renderInstagramFeedSlideFiles(parsedMemoir, options)
 
   const manifest = {
     format: INSTAGRAM_FEED_SLIDE_FORMAT,
@@ -98,8 +82,37 @@ async function exportInstagramFeedSlides(memoir, options = {}) {
 
   return encodeZip([
     { path: 'manifest.json', content: encoder.encode(`${JSON.stringify(manifest, null, 2)}\n`) },
-    ...slideEntries,
+    ...slideFiles.map((file) => ({ path: `slides/${file.name}`, content: file.content })),
   ])
+}
+
+async function renderInstagramFeedSlideFiles(memoir, options = {}) {
+  if (typeof options.renderSlide !== 'function') {
+    throw new Error('instagram-slide-renderer-required')
+  }
+
+  const parsedMemoir = parseMemoir(memoir)
+  if (!parsedMemoir) {
+    throw new Error('invalid-instagram-slide-source')
+  }
+
+  const slides = buildMemoirSlides(parsedMemoir)
+  const files = []
+
+  for (const slide of slides) {
+    const content = await options.renderSlide(slide)
+    if (!(content instanceof Uint8Array)) {
+      throw new Error(`invalid-instagram-slide-render:${slide.index}`)
+    }
+
+    files.push({
+      name: slide.fileName.replace(/^slides\//, ''),
+      mimeType: 'image/png',
+      content,
+    })
+  }
+
+  return files
 }
 
 export {
@@ -108,4 +121,5 @@ export {
   INSTAGRAM_FEED_SLIDE_WIDTH,
   buildMemoirSlides,
   exportInstagramFeedSlides,
+  renderInstagramFeedSlideFiles,
 }

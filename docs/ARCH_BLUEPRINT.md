@@ -67,7 +67,7 @@ On Android and iOS, missing or unavailable native AI is a visible error. Mobile 
 4. A mismatched or interrupted target is deleted and can self-heal on the next preparation.
 5. Native responses expose stable error codes, never absolute filesystem paths or raw native exception strings.
 6. Cancellation uses an atomic flag that inference can observe without waiting for the generation mutex.
-7. The model is unloaded on memory pressure/background lifecycle events when the platform requires it.
+7. Android unloads the model after every operation; iOS unloads on memory pressure/background lifecycle events.
 
 `mobile/runtime-manifest.json` is the source of truth for model name, hashes, sizes, context, token cap, memory class, and delivery mode. Generated Android and iOS metadata must be derived from it.
 
@@ -77,12 +77,16 @@ On Android and iOS, missing or unavailable native AI is a visible error. Mobile 
 
 - `MemoirRuntime` is a registered Capacitor plugin with `health`, `prepare`, `stageAsset`, `clearStagedAssets`, `generateMemoir`, `rewrite`, and `cancelGeneration`.
 - JNI calls a CPU-only shared `llama.cpp` engine on a single inference executor.
+- JNI reserves two CPU cores, caps inference at four threads, uses a 1,024-2,048-token context and 512-token prompt batches, and unloads the model after each operation.
+- Production watchdogs cancel compose after 120 seconds and rewrite after 60 seconds; severe thermal state is checked before work and every five seconds during inference.
+- ARM64 enables release-grade optimization and KleidiAI kernels. x86 exists only for CI contract evidence and is never a performance target.
 - Bundled ML Kit image labeling creates bounded photo context without a network model download; raw staging files and labels are cleared on completion, cancellation, load, and destruction.
 - The direct-install APK contains the pinned model. Unused projector assets are excluded until multimodal inference is implemented.
 - Generated model assets are synchronized as an exact one-file allowlist so stale build outputs cannot re-enter the APK.
 - The JNI library links one consistent static Android libc++ runtime; the APK must not depend on or package `libc++_shared.so`.
 - App backup is disabled or explicitly excludes WebView memoir data, model files, and media.
 - FileProvider exposes only an app-private `exports/` directory.
+- Social carousel export shares a bounded, PNG-only ordered file set through the Android system Sharesheet using the multi-image intent documented by Android and TikTok. It does not embed Instagram or TikTok SDK credentials.
 - Debug builds are the development install target. Release artifacts require signing credentials and signature verification.
 
 ### iOS
@@ -97,11 +101,11 @@ On Android and iOS, missing or unavailable native AI is a visible error. Mobile 
 
 ### Native inference smoke architecture
 
-- CI must execute at least one bounded, non-empty token generation through each production engine. A successful compile, model hash, or library load is not a substitute for inference.
+- CI must execute at least one bounded, schema-valid memoir generation through each production engine. A successful compile, model hash, library load, or arbitrary token is not a substitute for inference.
 - Android production and ordinary debug builds remain `arm64-v8a` only. The Gradle build accepts `x86_64` solely through an explicit, allowlisted smoke-test property, and the emulator test calls the same JNI entry point and bundled GGUF as the Capacitor plugin.
 - JNI batches must not retain pointers to loop-scoped token storage. The sampled token backing each one-token decode remains alive until the following decode completes.
 - The iOS smoke hook is compiled only when CI adds `MEMOIR_CI_INFERENCE_SMOKE`; normal Debug and every Release build omit it. It runs the production `MemoirRuntimeEngine` off the launch thread against the bundled model.
-- Smoke jobs emit only stable success/failure sentinels, elapsed time, and output byte counts. Generated memoir text, prompts containing user data, filesystem paths, and native exception details are never logged.
+- Smoke jobs emit only stable success/failure sentinels, token/output counts, JSON-completion state, and elapsed time. Generated memoir text, prompts containing user data, filesystem paths, and native exception details are never logged.
 - Every smoke has a bounded process timeout and fails unless generation returns a non-empty result. Emulator/simulator evidence complements but does not replace the physical-device release gates below.
 
 ### Desktop and browser
@@ -112,7 +116,7 @@ On Android and iOS, missing or unavailable native AI is a visible error. Mobile 
 
 ## UI contract
 
-The seven screens under `wireframes/` are the visual source of truth. Shared tokens use an ivory/mint paper surface, near-black ink, editorial serif headings, restrained green accents, square controls, and hard offset shadows.
+The seven screens under `wireframes/` remain the structural source of truth. The current visual system uses warm paper white, near-black ink, editorial serif headings, sage status accents, restrained blush selection states, cards no rounder than 8px, and soft hierarchy shadows. It favors candid keepsake content and direct creation over decorative panels or gender stereotypes.
 
 Required routes and states:
 
@@ -126,10 +130,13 @@ Required routes and states:
 
 Mobile supports 320, 390, 430, and 448 px widths, safe-area insets, fixed reachable navigation, 44 px minimum targets, visible focus, and status announcements. Desktop uses a 960 to 1200 px responsive content region with archive grids, a compose work area plus summary, and a readable editorial canvas.
 
+Reader chapters use a horizontal snap carousel at every supported width. Social export renders one deterministic 1080 x 1350 PNG per chapter; mobile shares the ordered images directly through the platform sheet and desktop downloads a ZIP. Target-app posting remains user-confirmed so no social account token or private media is handed to an embedded third-party SDK.
+
 ## Data and privacy constraints
 
 - Mobile network AI is fail-closed. A future LAN developer endpoint requires an explicit developer toggle and destination allowlist.
 - Native bridge inputs enforce asset count, byte/string length, token, enum, and identifier limits before inference.
+- Capacitor bridge logging is disabled in every build because method payloads may contain staged photo data URLs or memoir text.
 - Notes and music cues are data, not executable instructions. Model output is schema-validated and may not select paths, URLs, native actions, or share destinations.
 - Imported images have source byte and decoded-pixel caps and are re-encoded before persistence or inference.
 - `.memoir` import enforces archive, entry, asset-count, MIME, pixel, and string limits; image magic bytes must match the allowed MIME type.

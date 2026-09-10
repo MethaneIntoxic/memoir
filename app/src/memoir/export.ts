@@ -5,6 +5,7 @@ import {
   buildPortableMemoirArchive,
   buildPortableMemoirFileName,
   exportInstagramFeedSlides,
+  renderInstagramFeedSlideFiles,
   parsePortableMemoirArchive,
   PORTABLE_MEMOIR_MIME,
   renderMemoirDiagnosticsJson,
@@ -13,7 +14,7 @@ import {
   type MemoirDiagnosticsExportPayload,
   type MemoirSlide,
 } from '../../../packages/memoir-core/index.mjs'
-import { deliverBinaryFile, deliverTextFile, isNativeMobile } from '../platform/export-adapter.ts'
+import { deliverBinaryFile, deliverBinaryFiles, deliverTextFile, isNativeMobile } from '../platform/export-adapter.ts'
 
 export async function exportMemoirHtml(memoir: Memoir) {
   await deliverTextFile(buildMemoirFileName(memoir.title, 'html'), renderMemoirHtml(memoir), 'text/html')
@@ -142,6 +143,12 @@ async function renderInstagramSlidePng(slide: MemoirSlide): Promise<Uint8Array> 
 }
 
 export async function exportInstagramSlides(memoir: Memoir) {
+  if (isNativeMobile()) {
+    const files = await renderInstagramFeedSlideFiles(memoir, { renderSlide: renderInstagramSlidePng })
+    await deliverBinaryFiles(files)
+    return
+  }
+
   const bytes = await exportInstagramFeedSlides(memoir, { renderSlide: renderInstagramSlidePng })
   await deliverBinaryFile(buildMemoirFileName(memoir.title, 'instagram-slides.zip'), bytes, 'application/zip')
 }

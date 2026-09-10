@@ -10,6 +10,9 @@ android {
     namespace = "local.memoir.mobile"
     compileSdk = rootProject.ext.compileSdkVersion
     ndkVersion "27.0.12077973"
+    buildFeatures {
+        buildConfig = true
+    }
     signingConfigs {
         release {
             def storePath = System.getenv("MEMOIR_ANDROID_KEYSTORE")
@@ -27,6 +30,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        buildConfigField "boolean", "MEMOIR_EMULATOR_SMOKE", memoirEmulatorSmoke ? "true" : "false"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             if (memoirEmulatorSmoke) {

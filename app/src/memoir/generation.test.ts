@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { startComposeGeneration, type ComposeGenerationProgress } from './generation.ts'
+import { describeGenerationFailure, startComposeGeneration, type ComposeGenerationProgress } from './generation.ts'
 import { createSampleAssets, createSampleGeneratePayload } from './test-fixtures.ts'
 
 function jsonResponse(payload: unknown, status = 200): Response {
@@ -9,6 +9,12 @@ function jsonResponse(payload: unknown, status = 200): Response {
     headers: { 'Content-Type': 'application/json' },
   })
 }
+
+test('native thermal, timeout, and memory errors become actionable mobile copy', () => {
+  assert.match(describeGenerationFailure(new Error('native-ai-device-too-hot')), /cool/i)
+  assert.match(describeGenerationFailure(new Error('native-ai-generation-timeout')), /two-minute limit/i)
+  assert.match(describeGenerationFailure(new Error('native-ai-insufficient-memory-now')), /Close other apps/i)
+})
 
 test('startComposeGeneration polls the job endpoint until the memoir draft is ready', async () => {
   const progressUpdates: ComposeGenerationProgress[] = []

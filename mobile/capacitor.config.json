@@ -2,6 +2,7 @@
   "appId": "local.memoir.mobile",
   "appName": "Memoir",
   "webDir": "../app/dist",
+  "loggingBehavior": "none",
   "server": {
     "androidScheme": "https"
   },

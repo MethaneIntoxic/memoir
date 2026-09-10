@@ -4,7 +4,7 @@
 |---|---|---|---|
 | R1 | Archive loss after app/site data clearing | Explicit local-storage language and portable export | Encrypted durable storage/backup design |
 | R2 | Privacy claims exceed implementation | Mobile fail-closed routing; Android final APK has no network permission; bounded local labels | Physical offline traffic evidence and final archive privacy report |
-| R3 | Unsupported phone OOMs during preparation/inference | 8 GB-class runtime gate; bounded model/context/assets | Lowest-supported-device memory/thermal acceptance |
+| R3 | Unsupported phone OOMs during preparation/inference | Android 4 GB-class total plus 1.3 GB available-memory gate; iOS 8 GB-class gate; bounded model/context/assets | Lowest-supported-device memory/thermal acceptance |
 | R4 | Model asset is missing or corrupt | Pinned size/hash; atomic Android copy; prepare-time full verification | Corruption/recovery device exercise |
 | R5 | Model output invents details or breaks order | Grounding prompts, schema validation, exact asset-order check | Wider fixture and usability review |
 | R6 | Cancellation is slow during load or generation | Job ids, native per-token checks, staged-cache clearing | Physical cancel-latency measurement and recovery run |

@@ -49,6 +49,31 @@ export type StartComposeGenerationInput = {
   nativeRuntimeBridge?: NativeRuntimeBridge
 }
 
+export function describeGenerationFailure(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error || '')
+
+  if (message.includes('native-ai-device-too-hot')) {
+    return 'Your phone is too warm to create safely. Let it cool, then try again.'
+  }
+  if (message.includes('native-ai-generation-timeout')) {
+    return 'On-device AI reached its two-minute limit. Try fewer photos or a shorter note.'
+  }
+  if (message.includes('native-ai-rewrite-timeout')) {
+    return 'On-device rewriting reached its one-minute limit. Shorten the passage and retry.'
+  }
+  if (message.includes('native-ai-insufficient-memory') || message.includes('native-ai-unsupported-memory')) {
+    return 'This phone does not have enough free memory for local AI right now. Close other apps and retry.'
+  }
+  if (message.includes('native-ai-context-too-large')) {
+    return 'The story input is too long for this phone. Shorten the note and try again.'
+  }
+  if (message.includes('native-ai-model-not-ready') || message.includes('native-ai-model-prepare-failed')) {
+    return 'The on-device model could not be prepared. Check free storage and retry.'
+  }
+
+  return message || 'On-device generation failed'
+}
+
 type ComposeRequestBody = {
   assets: Asset[]
   tone: Tone

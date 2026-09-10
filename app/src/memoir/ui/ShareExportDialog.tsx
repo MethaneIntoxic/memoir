@@ -23,7 +23,7 @@ const actionLabels: Record<ShareAction, string> = {
   pdf: 'Print or share opened',
   web: 'Web memoir exported',
   portable: 'Portable memoir exported',
-  slides: '4:5 slides exported',
+  slides: 'Social carousel prepared',
 }
 
 function friendlyExportError(error: unknown): string {
@@ -98,8 +98,8 @@ export function ShareExportDialog({
         </button>
         <div className="share-dialog-heading">
           <p className="eyebrow">{memoirTitle}</p>
-          <h2 id="share-dialog-title">Distribute</h2>
-          <p id="share-dialog-description">Choose how you would like to keep or share this completed memoir.</p>
+          <h2 id="share-dialog-title">Ready to share</h2>
+          <p id="share-dialog-description">Keep the full memoir, or send its ordered 4:5 slides straight to a social app.</p>
         </div>
 
         <div className="share-options">
@@ -120,7 +120,7 @@ export function ShareExportDialog({
           </button>
           <button className="is-primary" type="button" onClick={() => void runAction('slides', onExportSlides)} disabled={busyAction !== null}>
             <ImagesSquareIcon weight="fill" aria-hidden="true" />
-            <span>{busyAction === 'slides' ? 'Rendering 4:5 slides…' : 'Export 4:5 slides'}</span>
+            <span>{busyAction === 'slides' ? 'Preparing social carousel...' : 'Instagram / TikTok carousel'}</span>
             <DownloadSimpleIcon aria-hidden="true" />
           </button>
         </div>
