@@ -162,4 +162,4 @@ export function parseMemoirList(value: unknown): Memoir[]
 export function parsePortableMemoirArchive(bytes: ArrayBuffer | Uint8Array): PortableMemoirResult
 export function parseRewriteText(value: unknown): string | null
 export function renderMemoirDiagnosticsJson(memoir: Memoir): string
-export function renderMemoirHtml(memoir: Memoir): string
+export function renderMemoirHtml(memoir: Memoir, options?: { includeStamp?: boolean }): string

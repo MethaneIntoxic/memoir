@@ -1,26 +1,37 @@
 :root {
-  --paper: #fbfaf7;
-  --surface: #ffffff;
-  --ink: #242020;
-  --muted: #665d5e;
-  --cranberry: #a3475a;
-  --blush: #f4dfe3;
-  --sage: #dbe9df;
-  --sage-deep: #3f6754;
-  --blue-gray: #dfe8f2;
-  --border: rgba(77, 63, 66, 0.16);
-  --shadow-ink: rgba(35, 32, 36, 0.14);
-  --shadow: 0 20px 52px rgba(62, 54, 65, 0.12);
-  --shadow-soft: 0 10px 28px rgba(62, 54, 65, 0.09);
-  --serif: Georgia, 'Times New Roman', serif;
-  --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --canvas: #e9e4da;
+  --paper: #f4f0e8;
+  --surface: #faf7f0;
+  --surface-elevated: #f8f4ec;
+  --surface-subtle: #ede8de;
+  --ink: #151311;
+  --ink-soft: #312d29;
+  --muted: #6c655c;
+  --accent: #c43627;
+  --accent-soft: #f0ddd8;
+  --accent-ink: #faf7f0;
+  --cranberry: #c43627;
+  --blush: #f0ddd8;
+  --sage: #dfe4dc;
+  --sage-deep: #2a493c;
+  --blue-gray: #dde2e6;
+  --border: rgba(21, 19, 17, 0.2);
+  --border-strong: #151311;
+  --stamp-shadow: 3px 3px 0 #151311;
+  --stamp-shadow-lg: 5px 5px 0 #151311;
+  --ease-snap: cubic-bezier(0.2, 0.9, 0.25, 1);
+  --serif: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, 'Times New Roman', serif;
+  --sans: 'Helvetica Neue', 'Avenir Next', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, ui-monospace, monospace;
+  --ambient-a: transparent;
+  --ambient-b: transparent;
   color: var(--ink);
-  background: #f2f4f1;
+  background: var(--canvas);
   font-family: var(--sans);
-  font-size: 16px;
+  font-size: 15.5px;
   font-weight: 400;
   font-synthesis: none;
-  line-height: 1.5;
+  line-height: 1.48;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -33,21 +44,49 @@
 html {
   min-width: 320px;
   min-height: 100%;
+  scroll-behavior: smooth;
 }
 
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: #f2f4f1;
+  background: var(--canvas);
+  color: var(--ink);
+  transition: background-color 240ms ease, color 200ms ease;
 }
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
+  color: inherit;
 }
 
 textarea {
   min-width: 0;
+}
+
+img {
+  max-width: 100%;
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

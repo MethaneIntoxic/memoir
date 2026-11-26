@@ -1,10 +1,11 @@
 {
   "name": "Memoir",
   "short_name": "Memoir",
+  "description": "Turn 3 to 10 candid photos into a 35mm scrapbook zine, Contact Sheet poster, or Cinema reel.",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#fff9f7",
-  "theme_color": "#f6e6e0",
+  "background_color": "#f4f0e8",
+  "theme_color": "#f4f0e8",
   "icons": [
     {
       "src": "icons/memoir-icon-192.png",

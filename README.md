@@ -1,6 +1,15 @@
 # Memoir
 
-Memoir is a private, local-first scrapbook app that turns 3 to 10 photos into an editable memoir. One React interface ships through a browser development path, a packaged Electron desktop app, and native Capacitor projects for Android and iOS.
+**Live Web App (Free, No Login):** https://memoir.memoir-press.workers.dev/
+
+Memoir turns 3 to 10 camera roll photos into a tactile 35mm scrapbook zine — featuring a brush-to-develop Darkroom tray, 3D flip prints, automatic Color DNA palettes, procedural lo-fi Cinema Reels, Contact Sheet posters, and standalone interactive HTML zines. One React 19/Vite interface ships as a zero-storage Cloudflare Workers web app, a packaged Electron desktop app, and native Capacitor projects for Android and iOS.
+
+## Highlights
+
+- **35mm Print-House Atelier UI**: Three living film stocks (**Riso Paper**, **Carbon Lab**, **Cyanotype**), drag-to-reorder filmstrips, 1-click offline **Sample Roll**, and zero external font/CDN dependencies.
+- **Interactive Rituals**: Canvas chemical-wash **Darkroom Develop tray**, **3D Flip Prints** with back-of-print notes, clickable Pantone **Color DNA** pigment strips, and fullscreen **Cinema Mode** with a procedural Web Audio soundscape.
+- **Print Lab Exports**: 1080×1350 Instagram/TikTok carousels, 4:5 **Contact Sheet Poster** (`.png`), local `MediaRecorder` **Cinema Story Reel** (`.webm`), standalone **Interactive HTML Zine** (with built-in 3D flip & Darkroom reveal), portable `.memoir` archive, and print/PDF.
+- **Hosted Web (Cloudflare Workers Free Tier)**: Serves static assets via Workers Assets with zero-storage ephemeral vision + scrapbook story drafting via Cloudflare Workers AI (`@cf/meta/llama-4-scout-17b-16e-instruct`), protected by edge rate limiting (`worker/index.mjs`, `cloudflare.config.ts`). Your archive stays strictly in your browser’s IndexedDB.
 
 ## Current implementation
 

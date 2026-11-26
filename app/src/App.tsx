@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import './App.css'
 import {
   MAX_CLIENT_ASSETS,
   MAX_CLIENT_PAYLOAD_BYTES,
   MAX_VISION_ASSETS,
-  sanitizeImage,
+  sanitizeImagesBatch,
 } from './memoir/assets.ts'
 import {
   createMemoirDraft,
@@ -15,9 +15,11 @@ import {
   upsertMemoirInArchive,
 } from './memoir/document.ts'
 import {
+  exportCinemaReelVideo,
+  exportContactSheetPoster,
+  exportInstagramSlides,
   exportMemoirDiagnostics,
   exportMemoirHtml,
-  exportInstagramSlides,
   exportPortableMemoir,
   importPortableMemoirFile,
   openMemoirPrintPreview,
@@ -27,18 +29,40 @@ import {
   startComposeGeneration,
   type ComposeGenerationProgress,
 } from './memoir/generation.ts'
+import { createSampleFilmRollMemoir } from './memoir/sample-roll.ts'
 import { clearArchiveStorage, readApiBase, readArchive, writeApiBase, writeArchive } from './memoir/storage.ts'
 import type { Asset, Memoir, Theme, Tone } from './memoir/types.ts'
 import { normalizeApiBase, parseRewriteText } from './memoir/validation.ts'
 import { readRuntimeHealth, rewriteWithRuntime, type RuntimeHealth } from './platform/runtime-adapter.ts'
 import { ArchiveScreen } from './memoir/ui/ArchiveScreen.tsx'
 import { ComposeScreen } from './memoir/ui/ComposeScreen.tsx'
-import { EditorScreen } from './memoir/ui/EditorScreen.tsx'
 import { MemoirShell } from './memoir/ui/MemoirShell.tsx'
 import { ReaderScreen } from './memoir/ui/ReaderScreen.tsx'
-import { SettingsScreen } from './memoir/ui/SettingsScreen.tsx'
-import { ShareExportDialog } from './memoir/ui/ShareExportDialog.tsx'
-import { ConfirmClearDialog } from './memoir/ui/ConfirmClearDialog.tsx'
+
+const EditorScreen = lazy(() => import('./memoir/ui/EditorScreen.tsx').then((mod) => ({ default: mod.EditorScreen })))
+const SettingsScreen = lazy(() => import('./memoir/ui/SettingsScreen.tsx').then((mod) => ({ default: mod.SettingsScreen })))
+const ShareExportDialog = lazy(() => import('./memoir/ui/ShareExportDialog.tsx').then((mod) => ({ default: mod.ShareExportDialog })))
+const ConfirmClearDialog = lazy(() => import('./memoir/ui/ConfirmClearDialog.tsx').then((mod) => ({ default: mod.ConfirmClearDialog })))
+
+const THEME_CYCLE: Theme[] = ['soft-archive', 'noir-journal', 'film-notes']
+const DARKROOM_PREF_KEY = 'memoir.pref.default-darkroom'
+const EXPORT_STAMP_PREF_KEY = 'memoir.pref.export-stamp'
+
+function readDefaultDarkroomPref(): boolean {
+  try {
+    return typeof window !== 'undefined' && window.localStorage.getItem(DARKROOM_PREF_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function readExportStampPref(): boolean {
+  try {
+    return typeof window === 'undefined' || window.localStorage.getItem(EXPORT_STAMP_PREF_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
 
 function createIdleGenerationProgress(): ComposeGenerationProgress {
   return {
@@ -59,6 +83,9 @@ function describeLocalAiHealth(payload: RuntimeHealth): string {
   }
 
   if (available && modelInstalled) {
+    if (runtime === 'cloudflare-workers-ai') {
+      return `Cloudflare Workers AI ready on ${model} (ephemeral, never stored)`
+    }
     return `Local AI ready on ${model}`
   }
 
@@ -117,6 +144,12 @@ function App() {
   const [healthRefresh, setHealthRefresh] = useState(0)
   const [shareOpen, setShareOpen] = useState(false)
   const [clearConfirmationOpen, setClearConfirmationOpen] = useState(false)
+  const [autoOpenCinema, setAutoOpenCinema] = useState(false)
+  const [defaultDarkroom, setDefaultDarkroom] = useState(() => readDefaultDarkroomPref())
+  const [includeExportStamp, setIncludeExportStamp] = useState(() => readExportStampPref())
+  const [ambientColors, setAmbientColors] = useState<{ a?: string; b?: string }>({})
+  const [toast, setToast] = useState('')
+  const toastTimerRef = useRef<number | null>(null)
   const generationRunId = useRef(0)
   const generationAbort = useRef<AbortController | null>(null)
   const resolvedApiBase = useMemo(() => normalizeApiBase(apiBase), [apiBase])
@@ -132,6 +165,25 @@ function App() {
   const hasUnsavedDraft = draft !== null && (!savedDraft || draft.updatedAt !== savedDraft.updatedAt)
   const hasUnsavedCompose = draft === null
     && (assets.length > 0 || notes.trim().length > 0 || musicCue.trim().length > 0)
+
+  const showToast = useCallback((message: string) => {
+    setToast(message)
+    if (toastTimerRef.current !== null) {
+      window.clearTimeout(toastTimerRef.current)
+    }
+    toastTimerRef.current = window.setTimeout(() => {
+      setToast('')
+      toastTimerRef.current = null
+    }, 2400)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current !== null) {
+        window.clearTimeout(toastTimerRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     writeApiBase(resolvedApiBase)
@@ -198,33 +250,42 @@ function App() {
     }
   }, [resolvedApiBase, healthRefresh])
 
+  const ingestImageFiles = useCallback(
+    async (incomingFiles: File[]) => {
+      const remainingSlots = MAX_CLIENT_ASSETS - assets.length
+      if (remainingSlots <= 0) {
+        setStage(`You can add up to ${MAX_CLIENT_ASSETS} photos`)
+        return
+      }
+      const files = incomingFiles.slice(0, Math.max(0, remainingSlots))
+      if (!files.length) {
+        return
+      }
+
+      setGenerationProgress(createIdleGenerationProgress())
+      setStage('Preparing photos')
+
+      try {
+        const nextAssets = await sanitizeImagesBatch(files, 3)
+        setAssets((currentAssets) => [...currentAssets, ...nextAssets].slice(0, MAX_CLIENT_ASSETS))
+        const nextCount = Math.min(MAX_CLIENT_ASSETS, assets.length + nextAssets.length)
+        setStage(
+          nextCount > MAX_VISION_ASSETS
+            ? `Ready. First ${MAX_VISION_ASSETS} photos get live visual analysis.`
+            : 'Ready to develop the story',
+        )
+        showToast(`Added ${nextAssets.length} ${nextAssets.length === 1 ? 'frame' : 'frames'}`)
+      } catch (error) {
+        setStage(error instanceof Error ? error.message : 'Photo import failed')
+      }
+    },
+    [assets.length, showToast],
+  )
+
   async function handleFiles(event: ChangeEvent<HTMLInputElement>) {
-    const remainingSlots = MAX_CLIENT_ASSETS - assets.length
-    const files = Array.from(event.target.files || []).slice(0, Math.max(0, remainingSlots))
+    const files = Array.from(event.target.files || [])
     event.target.value = ''
-    if (remainingSlots <= 0) {
-      setStage(`You can add up to ${MAX_CLIENT_ASSETS} photos`)
-      return
-    }
-    if (!files.length) {
-      return
-    }
-
-    setGenerationProgress(createIdleGenerationProgress())
-    setStage('Preparing photos')
-
-    try {
-      const nextAssets = await Promise.all(files.map((file) => sanitizeImage(file)))
-      setAssets((currentAssets) => [...currentAssets, ...nextAssets].slice(0, MAX_CLIENT_ASSETS))
-      const nextCount = Math.min(MAX_CLIENT_ASSETS, assets.length + nextAssets.length)
-      setStage(
-        nextCount > MAX_VISION_ASSETS
-          ? `Ready. First ${MAX_VISION_ASSETS} photos get live visual analysis.`
-          : 'Ready to build the story',
-      )
-    } catch (error) {
-      setStage(error instanceof Error ? error.message : 'Photo import failed')
-    }
+    await ingestImageFiles(files)
   }
 
   function removeAsset(assetId: string) {
@@ -253,6 +314,30 @@ function App() {
       const [asset] = reordered.splice(currentIndex, 1)
       reordered.splice(nextIndex, 0, asset)
       return reordered
+    })
+    setGenerationProgress(createIdleGenerationProgress())
+    setStage('Photo order updated')
+  }
+
+  function reorderAsset(fromIndex: number, toIndex: number) {
+    if (isGenerating || fromIndex === toIndex) {
+      return
+    }
+
+    setAssets((currentAssets) => {
+      if (
+        fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= currentAssets.length ||
+        toIndex >= currentAssets.length
+      ) {
+        return currentAssets
+      }
+      const next = [...currentAssets]
+      const [moved] = next.splice(fromIndex, 1)
+      if (!moved) return currentAssets
+      next.splice(toIndex, 0, moved)
+      return next
     })
     setGenerationProgress(createIdleGenerationProgress())
     setStage('Photo order updated')
@@ -305,13 +390,14 @@ function App() {
         return
       }
 
-      setStage('Opening editable storyboard')
+      setStage('Opening memoir reader')
 
       const memoir = createMemoirDraft({ assets, tone, theme, notes, musicCue, payload })
 
       setDraft(memoir)
       setView('reader')
       setStage('Draft ready')
+      showToast('Story developed')
     } catch (error) {
       if (generationRunId.current !== runId) {
         return
@@ -350,15 +436,16 @@ function App() {
       return
     }
 
-    const savedDraft = updateMemoir(draft, {})
-    const next = upsertMemoirInArchive(memoirs, savedDraft)
+    const nextSavedDraft = updateMemoir(draft, {})
+    const next = upsertMemoirInArchive(memoirs, nextSavedDraft)
 
     try {
       await writeArchive(next)
       setMemoirs(next)
       setArchiveReady(true)
-      setDraft(savedDraft)
+      setDraft(nextSavedDraft)
       setStage('Saved to archive')
+      showToast('Saved to local archive')
     } catch {
       setStage('Archive save failed')
     }
@@ -366,7 +453,7 @@ function App() {
 
   function openMemoir(memoir: Memoir) {
     if ((hasUnsavedCompose || (hasUnsavedDraft && draft?.id !== memoir.id))
-        && !window.confirm('Discard unsaved changes and open this memoir?')) {
+      && !window.confirm('Discard unsaved changes and open this memoir?')) {
       return
     }
     if (isGenerating) {
@@ -381,6 +468,50 @@ function App() {
     setStage('Opened from archive')
   }
 
+  function playMemoirCinema(memoir: Memoir) {
+    setAutoOpenCinema(true)
+    openMemoir(memoir)
+  }
+
+  function openSampleRoll() {
+    if ((hasUnsavedCompose || hasUnsavedDraft)
+      && !window.confirm('Discard unsaved changes and open this memoir?')) {
+      return
+    }
+    if (isGenerating) {
+      cancelGeneration()
+    }
+
+    const sample = createSampleFilmRollMemoir()
+    setDraft(sample)
+    setTheme(sample.theme)
+    setTone(sample.tone)
+    setGenerationProgress(createIdleGenerationProgress())
+    setView('reader')
+    setStage('Sample film roll loaded')
+    showToast('Try flipping prints, Darkroom mode, or Cinema reel')
+  }
+
+  async function deleteMemoir(memoirId: string) {
+    const target = memoirs.find((entry) => entry.id === memoirId)
+    if (!target || !window.confirm(`Delete "${target.title}" from this device?`)) {
+      return
+    }
+
+    const next = memoirs.filter((entry) => entry.id !== memoirId)
+    try {
+      await writeArchive(next)
+      setMemoirs(next)
+      if (draft?.id === memoirId) {
+        setDraft(null)
+      }
+      setStage('Memoir deleted')
+      showToast('Removed from archive')
+    } catch {
+      setStage('Delete failed')
+    }
+  }
+
   function moveSection(sectionId: string, direction: -1 | 1) {
     if (!draft) {
       return
@@ -391,7 +522,7 @@ function App() {
 
   function startNewMemoir() {
     if ((hasUnsavedCompose || hasUnsavedDraft)
-        && !window.confirm('Discard unsaved changes and start a new memoir?')) {
+      && !window.confirm('Discard unsaved changes and start a new memoir?')) {
       return
     }
     if (isGenerating) {
@@ -402,8 +533,8 @@ function App() {
     setNotes('')
     setMusicCue('')
     setTone('romantic')
-    setTheme('soft-archive')
     setDraft(null)
+    setAmbientColors({})
     setGenerationProgress(createIdleGenerationProgress())
     setStage('Idle')
     setView('compose')
@@ -415,9 +546,11 @@ function App() {
       setMemoirs([])
       setArchiveReady(true)
       setDraft(null)
+      setAmbientColors({})
       setView('archive')
       setGenerationProgress(createIdleGenerationProgress())
       setStage('Archive cleared')
+      showToast('Local archive cleared')
     } catch {
       setStage('Archive clear failed')
     }
@@ -453,6 +586,7 @@ function App() {
       setGenerationProgress(createIdleGenerationProgress())
       setView('reader')
       setStage('Portable memoir imported')
+      showToast('Imported portable memoir')
     } catch (error) {
       setStage(error instanceof Error ? error.message : 'Portable memoir import failed')
     }
@@ -470,11 +604,13 @@ function App() {
 
     setBusySection(sectionId)
     try {
-      const text = parseRewriteText(await rewriteWithRuntime({
-        apiBase: resolvedApiBase,
-        tone: draft.tone,
-        text: target[field],
-      }))
+      const text = parseRewriteText(
+        await rewriteWithRuntime({
+          apiBase: resolvedApiBase,
+          tone: draft.tone,
+          text: target[field],
+        }),
+      )
       if (!text) {
         throw new Error('Section rewrite returned invalid text')
       }
@@ -483,6 +619,7 @@ function App() {
         currentDraft ? updateMemoirSection(currentDraft, sectionId, field, text) : currentDraft,
       )
       setStage('Section polished')
+      showToast('Passage polished')
     } catch (error) {
       setStage(describeGenerationFailure(error))
     } finally {
@@ -497,10 +634,41 @@ function App() {
     }
   }
 
+  function cycleTheme() {
+    const active = draft?.theme || theme
+    const next = THEME_CYCLE[(THEME_CYCLE.indexOf(active) + 1) % THEME_CYCLE.length] ?? 'soft-archive'
+    updateDraftTheme(next)
+    showToast(`Film stock: ${next.replace('-', ' ')}`)
+  }
+
+  function toggleDefaultDarkroom() {
+    setDefaultDarkroom((current) => {
+      const next = !current
+      try {
+        window.localStorage.setItem(DARKROOM_PREF_KEY, next ? '1' : '0')
+      } catch {
+        // Ignore storage write error
+      }
+      return next
+    })
+  }
+
+  function toggleExportStamp() {
+    setIncludeExportStamp((current) => {
+      const next = !current
+      try {
+        window.localStorage.setItem(EXPORT_STAMP_PREF_KEY, next ? '1' : '0')
+      } catch {
+        // Ignore storage write error
+      }
+      return next
+    })
+  }
+
   async function exportHtml() {
     if (draft) {
-      await exportMemoirHtml(draft)
-      setStage('Web memoir exported')
+      await exportMemoirHtml(draft, { includeStamp: includeExportStamp })
+      setStage('Interactive web zine exported')
     }
   }
 
@@ -517,7 +685,7 @@ function App() {
     }
 
     try {
-      await exportInstagramSlides(draft)
+      await exportInstagramSlides(draft, { includeStamp: includeExportStamp })
       setStage('Instagram slides exported')
     } catch (error) {
       setStage(error instanceof Error ? error.message : 'Instagram slide export failed')
@@ -525,9 +693,27 @@ function App() {
     }
   }
 
+  async function exportPoster() {
+    if (!draft) {
+      return
+    }
+
+    await exportContactSheetPoster(draft, { includeStamp: includeExportStamp })
+    setStage('Contact sheet poster exported')
+  }
+
+  async function exportReel(onProgress?: (pct: number) => void) {
+    if (!draft) {
+      return
+    }
+
+    await exportCinemaReelVideo(draft, onProgress, { includeStamp: includeExportStamp })
+    setStage('Cinema video reel exported')
+  }
+
   async function printPdf() {
     if (draft) {
-      const opened = await openMemoirPrintPreview(draft)
+      const opened = await openMemoirPrintPreview(draft, { includeStamp: includeExportStamp })
       setStage(opened ? 'Print or share opened' : 'Print preview was blocked')
     }
   }
@@ -552,117 +738,163 @@ function App() {
     }
   }
 
-  const themeClass = `theme-${draft?.theme || theme}`
+  const handleAmbientChange = useCallback((a: string, b: string) => {
+    setAmbientColors({ a, b })
+  }, [])
+
+  const activeTheme = draft?.theme || theme
+  const themeClass = `theme-${activeTheme}`
+  const isEdgeAi = health.toLowerCase().includes('cloudflare')
 
   return (
     <>
       <MemoirShell
         view={view}
+        theme={activeTheme}
         themeClass={themeClass}
+        ambientA={ambientColors.a}
+        ambientB={ambientColors.b}
         health={health}
         stage={stage}
         isModalOpen={shareOpen || clearConfirmationOpen}
+        onCycleTheme={cycleTheme}
         onArchive={() => setView('archive')}
         onCreate={startNewMemoir}
         onStory={() => (draft ? setView('reader') : setView('archive'))}
         onSettings={() => setView('settings')}
       >
-      {view === 'archive' ? (
-        <ArchiveScreen
-          archiveReady={archiveReady}
-          memoirs={memoirs}
-          onCreate={startNewMemoir}
-          onOpen={openMemoir}
-          onClear={requestClearArchive}
-          onImport={handlePortableImport}
-        />
-      ) : null}
+        {view === 'archive' ? (
+          <ArchiveScreen
+            archiveReady={archiveReady}
+            isEdgeAi={isEdgeAi}
+            memoirs={memoirs}
+            onCreate={startNewMemoir}
+            onOpen={openMemoir}
+            onPlayCinema={playMemoirCinema}
+            onOpenSampleRoll={openSampleRoll}
+            onDeleteMemoir={(memoirId) => void deleteMemoir(memoirId)}
+            onClear={requestClearArchive}
+            onImport={handlePortableImport}
+          />
+        ) : null}
 
-      {view === 'compose' ? (
-        <ComposeScreen
-          assets={assets}
-          tone={tone}
-          notes={notes}
-          musicCue={musicCue}
-          apiBase={apiBase}
-          showAdvancedRuntimeSettings={showDebugUi}
-          isGenerating={isGenerating}
-          generationProgress={generationProgress}
-          onFiles={handleFiles}
-          onRemoveAsset={removeAsset}
-          onMoveAsset={moveAsset}
-          onToneChange={setTone}
-          onNotesChange={setNotes}
-          onMusicCueChange={setMusicCue}
-          onApiBaseChange={setApiBase}
-          onGenerate={handleGenerate}
-          onCancel={cancelGeneration}
-        />
-      ) : null}
+        {view === 'compose' ? (
+          <ComposeScreen
+            assets={assets}
+            tone={tone}
+            theme={theme}
+            notes={notes}
+            musicCue={musicCue}
+            apiBase={apiBase}
+            showAdvancedRuntimeSettings={showDebugUi}
+            isGenerating={isGenerating}
+            generationProgress={generationProgress}
+            onFiles={handleFiles}
+            onDropFiles={(files) => void ingestImageFiles(files)}
+            onRemoveAsset={removeAsset}
+            onMoveAsset={moveAsset}
+            onReorderAsset={reorderAsset}
+            onToneChange={setTone}
+            onThemeChange={setTheme}
+            onNotesChange={setNotes}
+            onMusicCueChange={setMusicCue}
+            onApiBaseChange={setApiBase}
+            onGenerate={handleGenerate}
+            onCancel={cancelGeneration}
+            onToast={showToast}
+          />
+        ) : null}
 
-      {view === 'editor' && draft ? (
-        <EditorScreen
-          draft={draft}
-          currentAssetMap={currentAssetMap}
-          busySection={busySection}
-          showDebugUi={showDebugUi}
-          onArchive={() => setView('archive')}
-          onTitleChange={(title) => setDraft(updateMemoir(draft, { title }))}
-          onSummaryChange={(summary) => setDraft(updateMemoir(draft, { summary }))}
-          onQuoteChange={(quote) => setDraft(updateMemoir(draft, { quote }))}
-          onThemeChange={updateDraftTheme}
-          onSectionChange={(sectionId, field, value) => setDraft(updateMemoirSection(draft, sectionId, field, value))}
-          onRewriteSection={rewriteSection}
-          onMoveSection={moveSection}
-          onSave={persistMemoir}
-          onShare={openShareDialog}
-          onDiagnostics={downloadDiagnostics}
-        />
-      ) : null}
+        {view === 'editor' && draft ? (
+          <Suspense fallback={null}>
+            <EditorScreen
+              draft={draft}
+              currentAssetMap={currentAssetMap}
+              busySection={busySection}
+              hasUnsavedChanges={hasUnsavedDraft}
+              showDebugUi={showDebugUi}
+              onArchive={() => setView('archive')}
+              onPreviewReader={() => setView('reader')}
+              onTitleChange={(title) => setDraft(updateMemoir(draft, { title }))}
+              onSummaryChange={(summary) => setDraft(updateMemoir(draft, { summary }))}
+              onQuoteChange={(quote) => setDraft(updateMemoir(draft, { quote }))}
+              onThemeChange={updateDraftTheme}
+              onSectionChange={(sectionId, field, value) => setDraft(updateMemoirSection(draft, sectionId, field, value))}
+              onRewriteSection={rewriteSection}
+              onMoveSection={moveSection}
+              onSave={persistMemoir}
+              onShare={openShareDialog}
+              onDiagnostics={downloadDiagnostics}
+            />
+          </Suspense>
+        ) : null}
 
-      {view === 'reader' && draft ? (
-        <ReaderScreen
-          draft={draft}
-          onArchive={() => setView('archive')}
-          onEdit={() => setView('editor')}
-          onSave={persistMemoir}
-          onShare={openShareDialog}
-        />
-      ) : null}
+        {view === 'reader' && draft ? (
+          <ReaderScreen
+            draft={draft}
+            autoOpenCinema={autoOpenCinema}
+            defaultDarkroom={defaultDarkroom}
+            onClearAutoCinema={() => setAutoOpenCinema(false)}
+            onArchive={() => setView('archive')}
+            onEdit={() => setView('editor')}
+            onSave={persistMemoir}
+            onShare={openShareDialog}
+            onAmbientChange={handleAmbientChange}
+            onToast={showToast}
+          />
+        ) : null}
 
-      {view === 'settings' ? (
-        <SettingsScreen
-          health={health}
-          memoirCount={memoirs.length}
-          theme={draft?.theme || theme}
-          hasDraft={draft !== null}
-          onRefreshHealth={refreshLocalAiHealth}
-          onThemeChange={updateDraftTheme}
-          onOpenExports={openShareDialog}
-          onExportDiagnostics={downloadDiagnostics}
-          onRequestClearArchive={requestClearArchive}
-        />
-      ) : null}
-
+        {view === 'settings' ? (
+          <Suspense fallback={null}>
+            <SettingsScreen
+              health={health}
+              isEdgeAi={isEdgeAi}
+              memoirCount={memoirs.length}
+              theme={activeTheme}
+              hasDraft={draft !== null}
+              defaultDarkroom={defaultDarkroom}
+              onRefreshHealth={refreshLocalAiHealth}
+              onThemeChange={updateDraftTheme}
+              onToggleDefaultDarkroom={toggleDefaultDarkroom}
+              onOpenExports={openShareDialog}
+              onExportDiagnostics={downloadDiagnostics}
+              onRequestClearArchive={requestClearArchive}
+            />
+          </Suspense>
+        ) : null}
       </MemoirShell>
 
       {shareOpen && draft ? (
-        <ShareExportDialog
-          memoirTitle={draft.title}
-          onClose={() => setShareOpen(false)}
-          onPrintPdf={printPdf}
-          onExportHtml={exportHtml}
-          onExportPortable={exportPortable}
-          onExportSlides={exportInstagram}
-        />
+        <Suspense fallback={null}>
+          <ShareExportDialog
+            memoirTitle={draft.title}
+            includeExportStamp={includeExportStamp}
+            onToggleExportStamp={toggleExportStamp}
+            onClose={() => setShareOpen(false)}
+            onPrintPdf={printPdf}
+            onExportHtml={exportHtml}
+            onExportPortable={exportPortable}
+            onExportSlides={exportInstagram}
+            onExportPoster={exportPoster}
+            onExportReel={exportReel}
+          />
+        </Suspense>
       ) : null}
 
       {clearConfirmationOpen ? (
-        <ConfirmClearDialog
-          memoirCount={memoirs.length}
-          onCancel={() => setClearConfirmationOpen(false)}
-          onConfirm={() => void confirmClearArchive()}
-        />
+        <Suspense fallback={null}>
+          <ConfirmClearDialog
+            memoirCount={memoirs.length}
+            onCancel={() => setClearConfirmationOpen(false)}
+            onConfirm={() => void confirmClearArchive()}
+          />
+        </Suspense>
+      ) : null}
+
+      {toast ? (
+        <div className="memoir-toast" role="status" aria-live="polite">
+          {toast}
+        </div>
       ) : null}
     </>
   )

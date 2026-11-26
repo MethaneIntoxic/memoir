@@ -374,6 +374,16 @@ async function defaultWait(delayMs: number, signal?: AbortSignal): Promise<void>
   })
 }
 
+async function readApiErrorMessage(response: Response): Promise<string | null> {
+  const payload = await readJsonResponse(response)
+  if (!isRecord(payload)) return null
+  if (isRecord(payload.error)) {
+    const nested = readString(payload.error.message)
+    if (nested) return nested
+  }
+  return readString(payload.message)
+}
+
 async function generateViaLegacyEndpoint(input: StartComposeGenerationInput): Promise<GenerateMemoirPayload> {
   const fetchImpl = input.fetchImpl || fetch
 
@@ -394,7 +404,8 @@ async function generateViaLegacyEndpoint(input: StartComposeGenerationInput): Pr
   })
 
   if (!response.ok) {
-    throw new Error(`Local AI request failed (${response.status})`)
+    const serverMessage = await readApiErrorMessage(response)
+    throw new Error(serverMessage || `Local AI request failed (${response.status})`)
   }
 
   emitProgress(input.onProgress, {
@@ -485,7 +496,8 @@ export async function startComposeGeneration(input: StartComposeGenerationInput)
   }
 
   if (!createResponse.ok) {
-    throw new Error(`Generation job request failed (${createResponse.status})`)
+    const serverMessage = await readApiErrorMessage(createResponse)
+    throw new Error(serverMessage || `Generation job request failed (${createResponse.status})`)
   }
 
   let snapshot = parsePollingJobSnapshot(await readJsonResponse(createResponse))

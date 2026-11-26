@@ -23,6 +23,10 @@ test('renderMemoirHtml escapes authored text while keeping the memoir structure 
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/)
   assert.match(html, /One &amp; &lt;Two&gt;/)
   assert.match(html, /&quot;gold&quot;/)
+  assert.match(html, /memoir\.memoir-press\.workers\.dev/)
+
+  const unstamped = renderMemoirHtml(memoir, { includeStamp: false })
+  assert.equal(unstamped.includes('memoir.memoir-press.workers.dev'), false)
 })
 
 test('diagnostics export stays pure and excludes raw image data', () => {

@@ -1,5 +1,14 @@
+import { memo } from 'react'
 import type { Asset, Memoir, Theme } from '../types.ts'
-import { ArrowLeftIcon, DownloadIcon, EditIcon, ImageIcon, MoreIcon, SaveIcon } from './icons.tsx'
+import {
+  ArrowLeftIcon,
+  DownloadIcon,
+  EditIcon,
+  EyeIcon,
+  ImageIcon,
+  MoreIcon,
+  SaveIcon,
+} from './icons.tsx'
 
 type SectionField = 'caption' | 'body'
 
@@ -7,8 +16,10 @@ type EditorScreenProps = {
   draft: Memoir
   currentAssetMap: Map<string, Asset>
   busySection: string
+  hasUnsavedChanges: boolean
   showDebugUi: boolean
   onArchive: () => void
+  onPreviewReader: () => void
   onTitleChange: (title: string) => void
   onSummaryChange: (summary: string) => void
   onQuoteChange: (quote: string) => void
@@ -21,14 +32,14 @@ type EditorScreenProps = {
   onDiagnostics: () => void
 }
 
-const themeOptions: Array<{ value: Theme; label: string }> = [
-  { value: 'noir-journal', label: 'Sage journal' },
-  { value: 'soft-archive', label: 'Blush archive' },
-  { value: 'film-notes', label: 'Blue notes' },
+const themeOptions: Array<{ value: Theme; label: string; hint: string; dots: [string, string, string] }> = [
+  { value: 'soft-archive', label: 'Riso paper', hint: 'newsprint & vermilion', dots: ['#f4f0e8', '#151311', '#c43627'] },
+  { value: 'noir-journal', label: 'Carbon lab', hint: 'darkroom & safelight', dots: ['#0f0f0d', '#ebe5d9', '#e45c33'] },
+  { value: 'film-notes', label: 'Cyanotype', hint: 'blueprint & ochre', dots: ['#edf1f5', '#0f2342', '#b8661e'] },
 ]
 
-function StoryCard({
-  draft,
+const StoryCard = memo(function StoryCard({
+  sectionCount,
   asset,
   section,
   index,
@@ -36,7 +47,8 @@ function StoryCard({
   onSectionChange,
   onRewriteSection,
   onMoveSection,
-}: Pick<EditorScreenProps, 'draft' | 'busySection' | 'onSectionChange' | 'onRewriteSection' | 'onMoveSection'> & {
+}: Pick<EditorScreenProps, 'busySection' | 'onSectionChange' | 'onRewriteSection' | 'onMoveSection'> & {
+  sectionCount: number
   asset: Asset | undefined
   section: Memoir['sections'][number]
   index: number
@@ -46,7 +58,13 @@ function StoryCard({
   return (
     <article className="story-card">
       <div className="story-card-media">
-        {asset ? <img src={asset.dataUrl} alt="" /> : <span className="image-fallback"><ImageIcon /></span>}
+        {asset ? (
+          <img src={asset.dataUrl} alt="" loading="lazy" decoding="async" />
+        ) : (
+          <span className="image-fallback">
+            <ImageIcon />
+          </span>
+        )}
         <span className="chapter-number">{index + 1}</span>
       </div>
       <textarea
@@ -70,7 +88,7 @@ function StoryCard({
           disabled={isBusy}
           onClick={() => onRewriteSection(section.id, 'caption')}
           aria-label={`Polish chapter ${index + 1} caption`}
-          title="Polish caption"
+          title="Polish caption with local AI"
         >
           <EditIcon />
         </button>
@@ -80,7 +98,7 @@ function StoryCard({
           onClick={() => onMoveSection(section.id, -1)}
           disabled={index === 0}
           aria-label={`Move chapter ${index + 1} left`}
-          title="Move left"
+          title="Move earlier"
         >
           <ArrowLeftIcon />
         </button>
@@ -88,9 +106,9 @@ function StoryCard({
           type="button"
           className="icon-button"
           onClick={() => onMoveSection(section.id, 1)}
-          disabled={index === draft.sections.length - 1}
+          disabled={index === sectionCount - 1}
           aria-label={`Move chapter ${index + 1} right`}
-          title="Move right"
+          title="Move later"
         >
           <ArrowLeftIcon className="move-right-icon" />
         </button>
@@ -100,21 +118,23 @@ function StoryCard({
           disabled={isBusy}
           onClick={() => onRewriteSection(section.id, 'body')}
           aria-label={`Polish chapter ${index + 1} body`}
-          title="Polish body"
+          title="Polish reflection with local AI"
         >
           <MoreIcon />
         </button>
       </div>
     </article>
   )
-}
+})
 
 export function EditorScreen({
   draft,
   currentAssetMap,
   busySection,
+  hasUnsavedChanges,
   showDebugUi,
   onArchive,
+  onPreviewReader,
   onTitleChange,
   onSummaryChange,
   onQuoteChange,
@@ -130,16 +150,28 @@ export function EditorScreen({
     <section className="screen editor-screen">
       <div className="editor-main">
         <div className="editor-toolbar">
-          <button type="button" className="soft-button compact-button" onClick={onArchive}>
-            <ArrowLeftIcon />
-            <span>Archive</span>
-          </button>
-          <p className="save-state">Editable storyboard</p>
+          <div className="reader-toolbar-group">
+            <button type="button" className="soft-button compact-button" onClick={onArchive}>
+              <ArrowLeftIcon />
+              <span>Archive</span>
+            </button>
+            <button type="button" className="soft-button compact-button" onClick={onPreviewReader}>
+              <EyeIcon />
+              <span>Preview reader</span>
+            </button>
+          </div>
+          {hasUnsavedChanges ? (
+            <span className="unsaved-badge">Unsaved edits</span>
+          ) : (
+            <p className="save-state">Editable storyboard</p>
+          )}
         </div>
 
         <section className="memoir-cover">
           <div className="cover-copy">
-            <p className="eyebrow">{new Date(draft.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</p>
+            <p className="eyebrow">
+              {new Date(draft.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })} · {draft.tone}
+            </p>
             <textarea
               className="title-input"
               aria-label="Memoir title"
@@ -155,7 +187,9 @@ export function EditorScreen({
               onChange={(event) => onSummaryChange(event.target.value)}
             />
           </div>
-          {draft.assets[0]?.dataUrl ? <img className="cover-image" src={draft.assets[0].dataUrl} alt="" /> : null}
+          {draft.assets[0]?.dataUrl ? (
+            <img className="cover-image" src={draft.assets[0].dataUrl} alt="" decoding="async" />
+          ) : null}
         </section>
 
         <section className="quote-panel">
@@ -167,7 +201,7 @@ export function EditorScreen({
           />
         </section>
 
-        <div className="theme-row" role="group" aria-label="Memoir visual theme">
+        <div className="theme-row theme-row-3" role="group" aria-label="Memoir visual theme">
           {themeOptions.map((option) => (
             <button
               key={option.value}
@@ -175,8 +209,13 @@ export function EditorScreen({
               className={option.value === draft.theme ? 'tone-button is-active' : 'tone-button'}
               onClick={() => onThemeChange(option.value)}
             >
+              <span className="theme-swatch-dots" aria-hidden="true">
+                {option.dots.map((dot) => (
+                  <i key={dot} style={{ backgroundColor: dot }} />
+                ))}
+              </span>
               <strong>{option.label}</strong>
-              <span>{option.value}</span>
+              <span>{option.hint}</span>
             </button>
           ))}
         </div>
@@ -193,7 +232,7 @@ export function EditorScreen({
             {draft.sections.map((section, index) => (
               <StoryCard
                 key={section.id}
-                draft={draft}
+                sectionCount={draft.sections.length}
                 asset={currentAssetMap.get(section.assetId)}
                 section={section}
                 index={index}
@@ -209,11 +248,13 @@ export function EditorScreen({
 
       <aside className="editor-sidebar">
         <h3>Keep this memoir</h3>
-        <p className="editor-sidebar-copy">Save it locally or choose a private export format.</p>
+        <p className="editor-sidebar-copy">
+          Save it locally or export as a carousel, contact sheet poster, cinema video reel, or interactive HTML zine.
+        </p>
         <div className="editor-actions">
           <button type="button" className="primary-button" onClick={onSave}>
             <SaveIcon />
-            <span>Save</span>
+            <span>{hasUnsavedChanges ? 'Save changes' : 'Saved'}</span>
           </button>
           <button type="button" className="soft-button" onClick={onShare}>
             <DownloadIcon />
